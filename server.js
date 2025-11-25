@@ -25,8 +25,12 @@ app.post("/register", (req, res) => {
     //
     // G. Adding the new user account
     //
-    users[username] = {username};
-
+    if (users[username]) {
+        users[username].playCount += 1;
+    }
+    else {
+        users[username] = {"playCount": 1};
+    }
     //
     // H. Saving the users.json file
     //
