@@ -1,15 +1,149 @@
 <!DOCTYPE html>
-<style>
-    body{
-        background: black;
-    }
-</style>
-<canvas></canvas>
+<html>
+<head>
+    <title>Dungeon Quest</title>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Front Page -->
+    <div id="frontPage" class="screen">
+        <div class="container">
+            <h1>Dungeon Quest!</h1>
+            <p style="text-align: center; margin-bottom: 30px; font-size: 1.2rem; line-height: 1.6;">
+                Welcome, brave knights!
+                You have received a quest from the King to go down a mysterious and dangerous dungeon.
+                Deafeat or avoid the monsters, loot all the treasures and finally escape from there is your mission.
+                Now, raise your sword. Your quest begins!
+            </p>
+            
+            <form id="register-form">
+                <label for="username">Enter your Username to Start the Adventure!</label>
+                <div class="spacer-0"></div>
+                <input id="register-username" maxlength="10" placeholder="Enter your username"></input>
+    
+                <div class="spacer-0"></div>
+                <div style="text-align: center;">
+                    <button type="submit" class="btn">Enter the Dungeon!</button>
+                </div>
+                <div id="register-message" class="warning center"></div>
+            </form>
 
-<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
-<script src="./script/dungeonQuest.js"></script>
-<script src="./script/sprite.js"></script>
-<script src="./script/player.js"></script>
-<script src="./script/monster.js"></script>
-<script src="./script/treasure.js"></script>
-<script src="./script/portal.js"></script>
+            <div class="instructions">
+                <p><span class="key">WASD</span> to move, <span class="key">J</span> to attack (Player 1)</p>
+                <p><span class="key">Arrow Keys</span> to move, <span class="key">/</span> to attack (Player 2)</p>
+                <p>Press <span class="key">C</span> to enable/disable Cheat Mode</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby Page -->
+    <div id="lobbyPage">
+        <div class="container lobby">
+            <h2>Dungeon Lobby</h2>
+            <p>Waiting for players to join...</p>
+            
+            <div class="player-list-container">
+                <h3>Connected Players:</h3>
+                <ul id="playerList" class="player-list">
+                    <!-- Player list will be populated by JavaScript -->
+                </ul>
+            </div>
+            
+            <div id="waitingMessage" class="waiting-message">
+                Waiting for another player to join...
+            </div>
+            
+            <button id="startGameBtn" class="btn hidden">Begin Adventure</button>
+        </div>
+    </div>
+
+    <!-- Game Page -->
+    <div id="gamePage">
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+            
+            <div class="ui-overlay">
+                <div class="player-info player1-info">
+                    <div class="player-name player1-name" id="player1Name">Player 1</div>
+                    <div>HP: <span id="player1HP">3</span>/3</div>
+                    <div class="health-bar">
+                        <div id="player1Health" class="health-fill player1-health" style="width: 100%;"></div>
+                    </div>
+                </div>
+                
+                <div class="game-stats">
+                    <div>Level: <span id="currentLevel">1</span>/3</div>
+                    <div class="treasure-count">Treasures: <span id="treasureCount">0</span>/<span id="totalTreasures">5</span></div>
+                    <div class="timer">Time: <span id="timer">05:00</span></div>
+                </div>
+                
+                <div class="player-info player2-info">
+                    <div class="player-name player2-name" id="player2Name">Player 2</div>
+                    <div>HP: <span id="player2HP">3</span>/3</div>
+                    <div class="health-bar">
+                        <div id="player2Health" class="health-fill player2-health" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="cheatIndicator" class="cheat-indicator">CHEAT MODE ENABLED</div>
+        </div>
+        
+        <div class="instructions" style="margin-top: 10px;">
+            <p>Work together to collect all treasures and reach the exit portal!</p>
+        </div>
+    </div>
+
+    <!-- Game Over Page -->
+    <div id="gameOverPage">
+        <div class="container">
+            <h1>Quest Complete!</h1>
+            
+            <div class="game-over-stats">
+                <div class="stat-row">
+                    <span>Time Taken:</span>
+                    <span id="finalTime">00:00</span>
+                </div>
+                <div class="stat-row">
+                    <span id="player1DeathsLabel">Player 1 Deaths:</span>
+                    <span id="player1Deaths">0</span>
+                </div>
+                <div class="stat-row">
+                    <span id="player2DeathsLabel">Player 2 Deaths:</span>
+                    <span id="player2Deaths">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Treasures Collected:</span>
+                    <span id="finalTreasures">0/0</span>
+                </div>
+            </div>
+            
+            <div class="ranking">
+                <h3>Top Adventurers</h3>
+                <ul id="rankingList" class="ranking-list">
+                    <li class="top-rank">Sir Lancelot - 02:15</li>
+                    <li>Dragon Slayer - 03:42</li>
+                    <li>Treasure Hunter - 04:18</li>
+                    <li>Knight Elite - 04:55</li>
+                    <li>Dungeon Master - 05:30</li>
+                </ul>
+            </div>
+            
+            <button id="playAgainBtn" class="btn">Embark Again</button>
+        </div>
+    </div>
+
+    <canvas></canvas>
+    
+    <!-- <script src="/socket.io/socket.io.min.js"></script> -->
+    <script src="./script/dungeonQuest.js"></script>
+    <script src="./script/sprite.js"></script>
+    <script src="./script/player.js"></script>
+    <script src="./script/monster.js"></script>
+    <script src="./script/treasure.js"></script>
+    <script src="./script/portal.js"></script>
+    <script src="./script/registration.js"></script>
+
+</body>
+</html>
