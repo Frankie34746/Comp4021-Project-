@@ -1,6 +1,4 @@
 const express = require("express");
-
-const bcrypt = require("bcryptjs");       // bcryptjs is used instead of bcrypt
 const fs = require("fs");
 
 // Create the Express app
