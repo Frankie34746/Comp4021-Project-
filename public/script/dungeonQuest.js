@@ -5,12 +5,6 @@ const context = canvas.getContext("2d");
 canvas.width = 120 * 16;    // 1920p
 canvas.height = 120 * 9;    // 1080p
 
-context.fillStyle = 'white'
-context.fillRect(0, 0, canvas.width, canvas.height)
-
-context.fillStyle = 'red'
-context.fillRect(100, 100, 100, 100)
-
 // Create the sounds objects
 const sounds = {
     background: new Audio("./res/background.mp3"),
