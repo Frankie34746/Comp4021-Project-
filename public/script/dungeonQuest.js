@@ -22,21 +22,6 @@ let partnerUsername;
 const REQUIRED_TREASURES = 6;       // The # of necessary treasures to open the escape portal
 let collectedTreasures = 0;         // The # of treasures collected
 
-// Game State
-const gameState = {
-    currentScreen: 'frontPage',
-    playerId: null,
-    username: '',
-    players: {},
-    gameActive: false,
-    level: 1,
-    treasuresCollected: 0,
-    totalTreasures: 5,
-    timeTaken: 300,
-    cheatMode: false,
-    playerDeaths: { player1: 0, player2: 0 }
-};
-
 $("#register-form").on("submit", (e) => {
     // Do not submit the form
     e.preventDefault();
