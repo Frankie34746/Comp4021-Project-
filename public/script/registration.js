@@ -13,7 +13,7 @@ const Registration = (function() {
         //
         // B. Sending the AJAX request to the server
         //
-        fetch("/register", {
+        fetch("/enterDungeon", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(userData)
