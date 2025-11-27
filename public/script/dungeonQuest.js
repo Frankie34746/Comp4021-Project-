@@ -1,9 +1,9 @@
 // Get the canvas and 2D context
-const canvas = $("canvas").get(0);
+const canvas = $("#gameCanvas").get(0);
 const context = canvas.getContext("2d");
 
-canvas.width = 120 * 16;    // 1920p
-canvas.height = 120 * 9;    // 1080p
+canvas.width = 1920;
+canvas.height = 1080;
 
 // Create the sounds objects
 const sounds = {
@@ -11,6 +11,12 @@ const sounds = {
     collect: new Audio("./res/collect.mp3"),
     gameover: new Audio("./res/gameover.mp3")
 }
+
+// Useful Const and Variables (Lobby)
+let roomId;
+let playerNum;
+let ownUsername;
+let partnerUsername;
 
 // Useful Const and Variables (In-game)
 const REQUIRED_TREASURES = 6;       // The # of necessary treasures to open the escape portal
@@ -43,11 +49,44 @@ $("#register-form").on("submit", (e) => {
         return;
     }
 
+    ownUsername = username;
+
     // Send a register request
     Registration.register(username,
         () => {
             $("#frontPage").hide();
             $("#lobbyPage").show();
+            Socket.connect();
+            const socket = Socket.getSocket();
+            socket.emit("joinLobby", username);
+            
+            socket.on("waiting", () => {
+                $("#waitingMessage").show();
+                $("#startGameBtn").hide();
+            });
+
+            socket.on("paired", (data) => {
+                roomId = data.roomId;
+                partnerUsername = ownUsername === data.player1 ? data.player2 : data.player1;
+                playerNum = ownUsername === data.player1 ? 1 : 2;
+                $(".player-list-container p").text(`Your Mighty Partner is: ${partnerUsername}`);
+                $("#player1Name").text(data.player1);
+                $("#player2Name").text(data.player2);
+                $("#waitingMessage").hide();
+                if (playerNum === 1) {
+                    $("#startGameBtn").show();
+                }
+            });
+            
+            $("#startGameBtn").on("click", () => {
+                socket.emit("startGame", roomId);
+            });
+
+            socket.on("gameStart", () => {
+                $("#lobbyPage").hide();
+                $("#gamePage").show();
+                initGame();
+            });
         }
     );
 });
@@ -56,4 +95,4 @@ $("#frontPage").show();
 $("#lobbyPage").hide();
 $("#gamePage").hide();
 $("#gameOverPage").hide();
-
+$("#cheatIndicator").hide();
