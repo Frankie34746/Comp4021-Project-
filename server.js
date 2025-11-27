@@ -46,7 +46,6 @@ const { createServer } = require("http");
 const httpServer = createServer( app );
 const io = new Server(httpServer);
 
-const lobby = {};
 let waitingSocket = null;
 
 io.on("connection", (socket) => {
