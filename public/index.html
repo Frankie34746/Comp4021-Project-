@@ -3,6 +3,7 @@
 <head>
     <title>Dungeon Quest</title>
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <link href="style.css" rel="stylesheet">
     <link rel="shortcut icon" href="#">     <!-- Just remove the error of not finding an icon -->
 </head>
@@ -19,7 +20,7 @@
             </p>
             
             <form id="register-form">
-                <label for="username">Enter your Username to Start the Adventure!</label>
+                <label>Enter your Username to Start the Adventure!</label>
                 <div class="spacer-0"></div>
                 <input id="register-username" maxlength="14" placeholder="Enter your username"></input>
     
@@ -45,10 +46,7 @@
             <p>Waiting for players to join...</p>
             
             <div class="player-list-container">
-                <h3>Connected Players:</h3>
-                <ul id="playerList" class="player-list">
-                    <!-- Player list will be populated by JavaScript -->
-                </ul>
+                <p>Your Mighty Partner is: </p>
             </div>
             
             <div id="waitingMessage" class="waiting-message">
@@ -135,14 +133,14 @@
         </div>
     </div>
     
-    <!-- <script src="/socket.io/socket.io.min.js"></script> -->
-    <script src="./script/dungeonQuest.js"></script>
     <script src="./script/sprite.js"></script>
+    <script src="./script/registration.js"></script>
+    <script src="./script/socket.js"></script>
     <script src="./script/player.js"></script>
     <script src="./script/monster.js"></script>
     <script src="./script/treasure.js"></script>
     <script src="./script/portal.js"></script>
-    <script src="./script/registration.js"></script>
+    <script src="./script/dungeonQuest.js"></script>
 
 </body>
 </html>
