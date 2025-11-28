@@ -1,0 +1,17 @@
+public/script/Sprite.js
+Handles sprite sheet loading, animation sequences, scaling, and rendering. Encapsulates how the character’s frames are displayed.
+
+public/script/Bounding_Box.js
+Planned collision bounding box module. Not yet used; will provide player/game world collision handling once added.
+
+public/script/player.js
+The Player module. Manages state (position, velocity, direction, jumping, attacking) and ties input to movement, jumping, and attack animations using the Sprite system.
+
+public/script/eventlistener.js
+Centralizes user input. Translates key presses/releases into calls to the Player (move, stop, jump, attack).
+
+public/script/main.js
+The game loop and core logic. Updates the sprite state, advances physics, and renders each frame.
+
+public/game.html
+HTML entry point to load and start the game. Creates the canvas and initializes the game’s scripts in order.
