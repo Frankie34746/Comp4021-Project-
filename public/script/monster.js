@@ -4,9 +4,8 @@
 // - `y` - The initial y position of the monster
 // - `gameArea` - The bounding box of the game area
 const Monster = function(ctx, x, y, gameArea) {
-    
-    const sprite_height = 64;
-    const sprite_width = 64;
+    // For identification
+    const id = Math.random().toString(36).substring(2, 9);
 
     // This is the sprite sequences of the monster facing different directions.
     // Assuming similar layout to player for simplicity; adjust as needed for actual spritesheet.
@@ -39,19 +38,11 @@ const Monster = function(ctx, x, y, gameArea) {
     // Track previous direction to detect changes
     let prevDirection = direction;
 
-    const getBoundingBox = function() {
-        let { x, y } = sprite.getXY();
-        let halfWidth = sprite_width / 2;
-        let halfheight = sprite_height / 2;
+    // Get Id
+    const getId = function() {
+        return id;
+    }
 
-        let left = x-halfWidth;
-        let right = x+halfWidth;
-        let top = y-halfheight;
-        let bottom = y+sprite_height;
-
-        // Assuming BoundingBox takes ctx, top, left, bottom, right 
-        return BoundingBox(ctx, top, left, bottom, right);
-    };
     // This function updates the monster.
     // - `time` - The timestamp when this function is called
     const update = function(time) {
@@ -100,8 +91,9 @@ const Monster = function(ctx, x, y, gameArea) {
 
     // The methods are returned as an object here.
     return {
-        getBoundingBox: getBoundingBox,
+        getBoundingBox: sprite.getBoundingBox,
         draw: sprite.draw,
-        update: update
+        update: update,
+        getId
     };
 };
