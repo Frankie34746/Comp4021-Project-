@@ -1,5 +1,20 @@
 {
  "NewPlayer00001": {
   "playCount": 1
+ },
+ "hi": {
+  "playCount": 11
+ },
+ "HI": {
+  "playCount": 2
+ },
+ "a": {
+  "playCount": 1
+ },
+ "yo": {
+  "playCount": 1
+ },
+ "hui": {
+  "playCount": 1
  }
 }

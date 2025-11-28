@@ -139,6 +139,10 @@ const Sprite = function(ctx, x, y) {
         /* Get the display size of the sprite */
         const size = getDisplaySize();
 
+        // Debug logging
+        if (!isReady()) {
+            console.warn("Sprite sheet not ready yet. Sheet complete:", sheet.complete, "Natural height:", sheet.naturalHeight);
+        }
 
         /* TODO */
         /* Replace the following code to draw the sprite correctly */
@@ -149,10 +153,10 @@ const Sprite = function(ctx, x, y) {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
             sheet,
-            sequence.x + index * sequence.width,sequence.y,
-            sequence.width,sequence.height,
-            parseInt(x - size.width / 2),parseInt(y - size.height / 2),
-            size.width,size.height
+            sequence.x + index * sequence.width, sequence.y,
+            sequence.width, sequence.height,
+            parseInt(x - size.width / 2), parseInt(y - size.height / 2),
+            size.width, size.height
         );
 
         /* Restore saved settings */

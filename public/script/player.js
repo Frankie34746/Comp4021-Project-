@@ -115,48 +115,47 @@ const Player = function(ctx, x, y, gameArea) {
     // This function updates the player depending on his movement.
     // - `time` - The timestamp when this function is called
     const update = function(time) {
-        /* Update the player if the player is moving */
-        if(!isattacking){
         let { x, y } = sprite.getXY();
-        if (direction != 0) {
-            /* Move the player */
-            switch (direction) {
-                case 1: x -= speed / 60; break;
-                case 3: x += speed / 60; break;
+        
+        // Update the player if not attacking
+        if (!isattacking) {
+            /* Horizontal Movement */
+            if (direction != 0) {
+                switch (direction) {
+                    case 1: x -= speed / 60; break;
+                    case 3: x += speed / 60; break;
+                }
             }
 
-        if (gameArea.isPointInBox(x, y)){
-                sprite.setXY(x, y);
+            // Keep player within bounds horizontally
+            if (x < gameArea.getLeft()) {
+                x = gameArea.getLeft();
+            }
+            if (x > gameArea.getRight()) {
+                x = gameArea.getRight();
             }
         }
 
-        // 2. Vertical Physics (Gravity and Jump)
-        // Apply gravity acceleration to velocity
+        // Vertical Physics (Gravity and Jump) - applies whether attacking or not
         velocityY += GRAVITY_ACCEL / 60;
-        
-        // Apply vertical velocity to position
         y += velocityY / 60;
 
-        // Check with hit the ground
-        if (y > gameArea.getBottom()){
+        // Check if hit the ground
+        if (y > gameArea.getBottom()) {
             velocityY = 0;
             y = gameArea.getBottom();
-            isJumping = false
+            isJumping = false;
         }
 
-
-        if (x < gameArea.getLeft()){
-            x = gameArea.getLeft();
-        }
-
-        if (x > gameArea.getRight()){
-            x = gameArea.getRight();
+        // Keep player within bounds vertically
+        if (y < gameArea.getTop()) {
+            y = gameArea.getTop();
+            velocityY = 0;
         }
 
         sprite.setXY(x, y);
-        }
-            
-        // /* Update the sprite object */
+        
+        // Update the sprite animation
         sprite.update(time);
     };
 
