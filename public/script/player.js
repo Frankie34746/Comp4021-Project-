@@ -59,6 +59,11 @@ const Player = function(ctx, x, y, gameArea) {
         return hp;
     };
 
+    // Set function for HP
+    const setHP = function(newHP) {
+        hp = newHP;
+    }
+
     // Function to hurt the player with cooldown
     const hurt = function(now) {
         if (now - lastHurtTime > HURT_COOLDOWN && hp > 0) {
@@ -214,6 +219,7 @@ const Player = function(ctx, x, y, gameArea) {
         slowDown: slowDown,
         isAttacking: isAttacking,
         getHP: getHP,
+        setHP,
         hurt: hurt,
         getAttackBoundingBox: getAttackBoundingBox,
         getBoundingBox: sprite.getBoundingBox,
