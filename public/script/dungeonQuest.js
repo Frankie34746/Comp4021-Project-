@@ -319,7 +319,7 @@ const gameLoop = function(time) {
             try {
                 player.draw();
                 
-                // Visualize attack box
+            // Visualize attack box
             if (player.isAttacking()) {
             const attackBox = player.getAttackBoundingBox();
             context.strokeStyle = 'red';
@@ -330,7 +330,18 @@ const gameLoop = function(time) {
                 attackBox.getRight() - attackBox.getLeft(),
                 attackBox.getBottom() - attackBox.getTop()
             );
-        }
+            }
+            // Visualize player box
+            const Box = player.getBoundingBox();
+            context.strokeStyle = 'yellow';
+            context.lineWidth = 2;
+            context.strokeRect(
+                Box.getLeft(),
+                Box.getTop(),
+                Box.getRight() - Box.getLeft(),
+                Box.getBottom() - Box.getTop()
+            );
+            
             } catch (error) {
                 console.error("Error drawing player:", error);
             }
@@ -344,7 +355,18 @@ const gameLoop = function(time) {
                 } catch (error) {
                     console.error("Error drawing monster:", error);
                 }
+                // Visualize monster box
+                const Box = monster.getBoundingBox();
+                context.strokeStyle = 'green';
+                context.lineWidth = 2;
+                context.strokeRect(
+                    Box.getLeft(),
+                    Box.getTop(),
+                    Box.getRight() - Box.getLeft(),
+                    Box.getBottom() - Box.getTop()
+            );
             });
+            
         }
     } catch (error) {
         console.error("Error in game loop:", error);
