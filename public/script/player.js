@@ -65,9 +65,11 @@ const Player = function(ctx, x, y, gameArea) {
             hp--;
             lastHurtTime = now;
             console.log(hp);
+            return true;  // Indicate HP changed
         }
+        return false;
     };
-    
+        
     // get function for isAttacking
     const isAttacking = function(){
         return isattacking;
@@ -87,20 +89,6 @@ const Player = function(ctx, x, y, gameArea) {
         }
         let top = y-halfheight;
         let bottom = y+sprite_height;
-        // Assuming BoundingBox takes ctx, top, left, bottom, right 
-        return BoundingBox(ctx, top, left, bottom, right);
-    };
-
-    const getBoundingBox = function() {
-        let { x, y } = sprite.getXY();
-        let halfWidth = sprite_width / 2;
-        let halfheight = sprite_height / 2;
-
-        let left = x-halfWidth;
-        let right = x+halfWidth;
-        let top = y-halfheight;
-        let bottom = y+sprite_height;
-
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
         return BoundingBox(ctx, top, left, bottom, right);
     };
@@ -228,7 +216,7 @@ const Player = function(ctx, x, y, gameArea) {
         getHP: getHP,
         hurt: hurt,
         getAttackBoundingBox: getAttackBoundingBox,
-        getBoundingBox: getBoundingBox,
+        getBoundingBox: sprite.getBoundingBox,
         draw: sprite.draw,
         update: update
     };
