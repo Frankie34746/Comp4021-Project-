@@ -158,7 +158,8 @@ $("#gameOverPage").hide();
 // ===================== GAME LOOP =====================
 
 // Initialize game variables
-let player1 = null;
+let player = null;
+let monsters = null;
 let gameArea = null;
 let gameLoopId = null;
 
@@ -173,21 +174,26 @@ const initializeGame = function() {
     if (gameState.gameActive) {
         try {
             // Create the game area (bounding box)
-            // Leave 50px margin on all sides
             console.log("Creating bounding box...");
-            gameArea = BoundingBox(context, 50, 50, canvas.height - 50, canvas.width - 50);
+            gameArea = BoundingBox(context, 150, 20, 430, 775);
             console.log("Bounding box created:", gameArea);
             
-            // Create player 1 in the center of the game area
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height - 100;
-            console.log("Creating player 1 at position (" + centerX + ", " + centerY + ")...");
-            player1 = Player(context, centerX, centerY, gameArea);
-            console.log("Player 1 created:", player1);
+            // Create player in the specified position
+            console.log("Creating player at position (427, 240)...");
+            player = Player(context, 427, 240, gameArea);
+            console.log("Player created:", player);
             
-            // Set up input listeners for player 1
+            // Create monsters
+            console.log("Creating monsters...");
+            monsters = [
+                // Monster(context, 750, 240, gameArea),
+                Monster(context, 50, 240, gameArea)
+            ];
+            console.log("Monsters created:", monsters);
+            
+            // Set up input listeners for player
             console.log("Setting up input listeners...");
-            setupInputListeners(player1);
+            setupInputListeners(player);
             console.log("Input listeners set up");
             
             // Start the game loop
@@ -211,8 +217,7 @@ const gameLoop = function(time) {
     
     try {
         // Clear the canvas
-        context.fillStyle = 'white';
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(0, 0, canvas.width, canvas.height);
         
         // Draw debug info
         context.fillStyle = 'black';
@@ -220,17 +225,79 @@ const gameLoop = function(time) {
         context.fillText('DEBUG: Frame ' + frameCount, 20, 40);
         
         // Update player
-        if (player1) {
+        if (player) {
             try {
-                player1.update(time);
-                player1.draw();
+                player.update(time);
             } catch (error) {
-                console.error("Error updating/drawing player:", error);
+                console.error("Error updating player:", error);
                 context.fillText('ERROR: ' + error.message, 20, 80);
             }
         } else {
-            console.warn("player1 is null!");
-            context.fillText('player1 is null', 20, 80);
+            console.warn("player is null!");
+            context.fillText('player is null', 20, 80);
+        }
+        
+        // Update monsters
+        if (monsters) {
+            monsters.forEach(monster => {
+                try {
+                    monster.update(time);
+                } catch (error) {
+                    console.error("Error updating monster:", error);
+                }
+            });
+        } else {
+            console.warn("monsters is null!");
+        }
+        
+        // Collision detection
+        if (player && monsters) {
+        for (let i = monsters.length - 1; i >= 0; i--) {
+            const monster = monsters[i];
+            const playerBB = player.getBoundingBox();
+            const monsterBB = monster.getBoundingBox();
+            if (player.getAttackBoundingBox().intersect(monsterBB)) {
+                if (player.isAttacking()){
+                    monsters.splice(i, 1);
+                }
+            }
+            if (playerBB.intersect(monsterBB)) {
+                    player.hurt(now);
+            }
+        }
+        }
+        
+        // Draw player
+        if (player) {
+            try {
+                player.draw();
+                
+                // Visualize attack box
+            if (player.isAttacking()) {
+            const attackBox = player.getAttackBoundingBox();
+            context.strokeStyle = 'red';
+            context.lineWidth = 2;
+            context.strokeRect(
+                attackBox.getLeft(),
+                attackBox.getTop(),
+                attackBox.getRight() - attackBox.getLeft(),
+                attackBox.getBottom() - attackBox.getTop()
+            );
+        }
+            } catch (error) {
+                console.error("Error drawing player:", error);
+            }
+        }
+        
+        // Draw monsters
+        if (monsters) {
+            monsters.forEach(monster => {
+                try {
+                    monster.draw();
+                } catch (error) {
+                    console.error("Error drawing monster:", error);
+                }
+            });
         }
     } catch (error) {
         console.error("Error in game loop:", error);
