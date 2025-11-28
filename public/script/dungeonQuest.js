@@ -236,9 +236,9 @@ $("#gameOverPage").hide();
 
 // Initialize game variables
 // Define start positions (adjust as needed for your game area)
-const player1StartX = 100;
-const player2StartX = 700;
-const startY = 240;
+const player1StartX = 50;
+const player2StartX = 150;
+const startY = 704;
 
 let player1 = null;
 let player2 = null;
@@ -262,13 +262,25 @@ const initializeGame = function() {
         try {
             // Create the game area (bounding box)
             console.log("Creating bounding box...");
-            gameArea = BoundingBox(context, 150, 20, 430, 775);
+            gameArea = BoundingBox(context, 64, 32, canvas.height-64, canvas.width-32);
             console.log("Bounding box created:", gameArea);
-            
+
+            // Build maps
+            console.log("Building map...");
+            maps = [
+                map(context, map1),
+                // map(context, map2),   // add more maps here later
+                // map(context, map3),
+            ];
+            console.log("Maps built:", maps);
+
+            const selectedMap = maps[Math.floor(Math.random() * maps.length)];
+            console.log("Randomly selected map:", selectedMap);
+
             // Create player in the specified position
             console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
-            player1 = Player(context, player1StartX, startY, gameArea);
-            player2 = Player(context, player2StartX, startY, gameArea);
+            player1 = Player(context, player1StartX, startY, gameArea,selectedMap);
+            player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
             console.log("Player created:", player1);
             console.log("Player created:", player2);
             if (playerNum === 1) {
@@ -390,6 +402,12 @@ const gameLoop = function(time) {
             });
         }
         
+        // Draw map
+        maps.forEach(map => {
+            map.draw();
+        });
+    
+        
     } catch (error) {
         console.error("Error in game loop:", error);
     }
@@ -397,5 +415,3 @@ const gameLoop = function(time) {
     // Continue the loop
     gameLoopId = requestAnimationFrame(gameLoop);
 };
-
-
