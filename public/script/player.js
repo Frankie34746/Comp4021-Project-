@@ -8,15 +8,18 @@ const Player = function(ctx, x, y, gameArea) {
     const attackframe = 50;
     const attackcount = 6;
 
+    const sprite_height = 64;
+    const sprite_width = 64;
+    
     // This is the sprite sequences of the player facing different directions.
     const sequences = {
         /* Idling sprite sequences for facing different directions */
-        idleLeft:  { x: 0, y: 1471, width: 64, height: 64, count: 2, timing: 500, loop: true },
-        idleRight: { x: 0, y: 1599, width: 64, height: 64, count: 2, timing: 500, loop: true },
+        idleLeft:  { x: 0, y: 1471, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
+        idleRight: { x: 0, y: 1599, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
 
         /* Moving sprite sequences for facing different directions */
-        moveLeft:  { x: 0, y: 576, width: 64, height: 64, count: 8, timing: 50, loop: true },
-        moveRight: { x: 0, y: 703, width: 64, height: 64, count: 8, timing: 50, loop: true },
+        moveLeft:  { x: 0, y: 576, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveRight: { x: 0, y: 703, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
 
         attackLeft: { x: 0, y: 3583, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
         attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false }
@@ -43,11 +46,51 @@ const Player = function(ctx, x, y, gameArea) {
     let isJumping = false;
     let isattacking = false;
 
+    // Player HP
+    let hp = 3;
+    const maxHP = 3;
+
+    // Hurt cooldown
+    let lastHurtTime = 0;
+    const HURT_COOLDOWN = 1000; // 1 second in ms
+
+    // Get function for HP
+    const getHP = function() {
+        return hp;
+    };
+
+    // Function to hurt the player with cooldown
+    const hurt = function(now) {
+        if (now - lastHurtTime > HURT_COOLDOWN && hp > 0) {
+            hp--;
+            lastHurtTime = now;
+            console.log(hp);
+        }
+    };
+    
     // get function for isAttacking
     const isAttacking = function(){
         return isattacking;
     };
 
+    // Get attack bounding box (front half during attack) as BoundingBox object
+    const getAttackBoundingBox = function() {
+        let { x, y } = sprite.getXY();
+        let halfWidth = sprite_width / 2;
+        let halfheight = sprite_height / 2;
+        if (facing === 1) { // Left
+            left = x-halfWidth-sprite_width;
+            right = x-halfWidth;
+        } else { // Right
+            left = x+halfWidth
+            right = x+halfWidth+sprite_width;
+        }
+        let top = y-halfheight;
+        let bottom = y+sprite_height;
+        // Assuming BoundingBox takes ctx, top, left, bottom, right 
+        return BoundingBox(ctx, top, left, bottom, right);
+    };
+    
     // This function sets the player's moving direction.
     // - `dir` - the moving direction (1: Left, 2: Up, 3: Right, 4: Down)
     const move = function(dir) {
@@ -168,8 +211,12 @@ const Player = function(ctx, x, y, gameArea) {
         speedUp: speedUp,
         slowDown: slowDown,
         isAttacking: isAttacking,
+        getHP: getHP,
+        hurt: hurt,
+        getAttackBoundingBox: getAttackBoundingBox,
         getBoundingBox: sprite.getBoundingBox,
         draw: sprite.draw,
         update: update
     };
 };
+
