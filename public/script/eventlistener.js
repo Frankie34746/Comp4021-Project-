@@ -13,6 +13,7 @@ function setupInputListeners(player) {
         const D = 68;
         const SPACEBAR = 32;
         const J = 74;
+        const socket = Socket.getSocket();
 
     $(document).on("keydown", function(event) {
         // Arrow keys and Spacebar key codes
@@ -20,87 +21,92 @@ function setupInputListeners(player) {
         // This is a common pattern to prevent default browser actions (like scrolling)
         // when arrow keys or spacebar are pressed.
 
-        if (!player.isAttacking()){
+        if (!player.isAttacking()) {
+            switch (event.keyCode) {
+                case A:
+                    player.move(1);
+                    socket.emit("action", { roomId: window.roomId, type: "move", dir: 1 });
+                    break;
+                case W:
+                    player.jump();
+                    socket.emit("action", { roomId: window.roomId, type: "jump" });
+                    break;
+                case D:
+                    player.move(3);
+                    socket.emit("action", { roomId: window.roomId, type: "move", dir: 3 });
+                    break;
+                case SPACEBAR:
+                    player.speedUp();
+                    socket.emit("action", { roomId: window.roomId, type: "speedUp" });
+                    break;
+                case J:
+                    player.attack();
+                    socket.emit("action", { roomId: window.roomId, type: "attack" });
+                    break;
+                default:
+                    console.log(event.keyCode);
+                    break;
+            }
 
-        // if (event.keyCode >= LEFT_ARROW && event.keyCode <= DOWN_ARROW || event.keyCode === SPACEBAR) {
-        //     event.preventDefault();
-        // }
-
-        switch (event.keyCode) {
-            case A:
-                player.move(1); // Assuming 1 is left
-                break;
-            case W:
-                player.jump(); // Assuming 2 is up
-                break;
-            case D:
-                player.move(3); // Assuming 3 is right
-                break;
-            case SPACEBAR:
-                player.speedUp();
-                break;
-            case J:
-                player.attack();
-                break;
-            default:
-                console.log(event.keyCode)
-                break;
+            switch (event.keyCode) {
+                case LEFT_ARROW:
+                    player.move(1);
+                    socket.emit("action", { roomId: window.roomId, type: "move", dir: 1 });
+                    break;
+                case UP_ARROW:
+                    player.jump();
+                    socket.emit("action", { roomId: window.roomId, type: "jump" });
+                    break;
+                case Right_ARROW:
+                    player.move(3);
+                    socket.emit("action", { roomId: window.roomId, type: "move", dir: 3 });
+                    break;
+                case SPACEBAR:
+                    player.speedUp();
+                    socket.emit("action", { roomId: window.roomId, type: "speedUp" });
+                    break;
+                case SLASH:
+                    player.attack();
+                    socket.emit("action", { roomId: window.roomId, type: "attack" });
+                    break;
+                default:
+                    console.log(event.keyCode);
+                    break;
+            }
         }
-
-        switch (event.keyCode) {
-            case LEFT_ARROW:
-                player.move(1); // Assuming 1 is left
-                break;
-            case UP_ARROW:
-                player.jump(); // Assuming 2 is up
-                break;
-            case Right_ARROW:
-                player.move(3); // Assuming 3 is right
-                break;
-            case SPACEBAR:
-                player.speedUp();
-                break;
-            case SLASH:
-                player.attack();
-                break;
-            default:
-                console.log(event.keyCode)
-                break;
-        }
-    }
     });
 
-    // Keyup handler
     $(document).on("keyup", function(event) {
+        if (!player.isAttacking()) {
+            switch (event.keyCode) {
+                case A:
+                    player.stop(1);
+                    socket.emit("action", { roomId: window.roomId, type: "stop", dir: 1 });
+                    break;
+                case D:
+                    player.stop(3);
+                    socket.emit("action", { roomId: window.roomId, type: "stop", dir: 3 });
+                    break;
+                case SPACEBAR:
+                    player.slowDown();
+                    socket.emit("action", { roomId: window.roomId, type: "slowDown" });
+                    break;
+            }
 
-
-        if (!player.isAttacking()){
-        switch (event.keyCode) {
-            case A:
-                player.stop(1);
-                break;
-            case D:
-                player.stop(3);
-                break;
-            case SPACEBAR:
-                player.slowDown();
-                break;
+            switch (event.keyCode) {
+                case LEFT_ARROW:
+                    player.stop(1);
+                    socket.emit("action", { roomId: window.roomId, type: "stop", dir: 1 });
+                    break;
+                case Right_ARROW:
+                    player.stop(3);
+                    socket.emit("action", { roomId: window.roomId, type: "stop", dir: 3 });
+                    break;
+                case SPACEBAR:
+                    player.slowDown();
+                    socket.emit("action", { roomId: window.roomId, type: "slowDown" });
+                    break;
+            }
         }
-
-     if (!player.isAttacking()){
-
-        switch (event.keyCode) {
-            case LEFT_ARROW:
-                player.stop(1);
-                break;
-            case Right_ARROW:
-                player.stop(3);
-                break;
-            case SPACEBAR:
-                player.slowDown();
-                break;
-        }
-     }
-    }
     });
 }
