@@ -3,7 +3,7 @@
 // - `x` - The initial x position of the player
 // - `y` - The initial y position of the player
 // - `gameArea` - The bounding box of the game area
-const Player = function(ctx, x, y, gameArea) {
+const Player = function(ctx, x, y, gameArea, map) {
 
     const attackframe = 50;
     const attackcount = 6;
@@ -11,6 +11,13 @@ const Player = function(ctx, x, y, gameArea) {
     const sprite_height = 64;
     const sprite_width = 64;
     
+
+    const halfWidth = sprite_width / 2;
+    const halfheight = sprite_height / 2;
+
+    // Collision boxes of maps
+    let collisionBBs = map.getBoundingBoxlist();
+
     // This is the sprite sequences of the player facing different directions.
     const sequences = {
         /* Idling sprite sequences for facing different directions */
@@ -83,8 +90,6 @@ const Player = function(ctx, x, y, gameArea) {
     // Get attack bounding box (front half during attack) as BoundingBox object
     const getAttackBoundingBox = function() {
         let { x, y } = sprite.getXY();
-        let halfWidth = sprite_width / 2;
-        let halfheight = sprite_height / 2;
         if (facing === 1) { // Left
             left = x-halfWidth-sprite_width;
             right = x-halfWidth;
@@ -97,7 +102,19 @@ const Player = function(ctx, x, y, gameArea) {
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
         return BoundingBox(ctx, top, left, bottom, right);
     };
-    
+
+    const getBoundingBox = function() {
+        let { x, y } = sprite.getXY();
+
+        let left = x-halfWidth;
+        let right = x+halfWidth;
+        let top = y-halfheight;
+        let bottom = y+sprite_height;
+
+        // Assuming BoundingBox takes ctx, top, left, bottom, right 
+        return BoundingBox(ctx, top, left, bottom, right);
+    };
+
     // This function sets the player's moving direction.
     // - `dir` - the moving direction (1: Left, 2: Up, 3: Right, 4: Down)
     const move = function(dir) {
@@ -166,7 +183,7 @@ const Player = function(ctx, x, y, gameArea) {
     // - `time` - The timestamp when this function is called
     const update = function(time) {
         let { x, y } = sprite.getXY();
-        
+
         // Update the player if not attacking
         if (!isattacking) {
             /* Horizontal Movement */
@@ -184,6 +201,29 @@ const Player = function(ctx, x, y, gameArea) {
             if (x > gameArea.getRight()) {
                 x = gameArea.getRight();
             }
+
+            let left = x-halfWidth;
+            let right = x+halfWidth;
+            let top = y-halfheight;
+            let bottom = y+sprite_height;
+            let currentBox = BoundingBox(ctx, top, left, bottom, right);
+
+            for (let i = 0; i < collisionBBs.length; i++) {
+                if (currentBox.intersect(collisionBBs[i])){
+                    // collision to the block when moving to the left
+                    if (direction === 1) {
+                        const offset = x - currentBox.getLeft();
+                        x = collisionBBs[i].getRight() + offset + 0.01;
+                        break;
+                    }
+                    // collision to the block when moving to the right
+                    else if (direction === 3){
+                        const offset = currentBox.getRight() - x;
+                        x = collisionBBs[i].getLeft() - offset - 0.01;
+                        break;
+                    }
+                };
+            };
         }
 
         // Vertical Physics (Gravity and Jump) - applies whether attacking or not
@@ -196,11 +236,65 @@ const Player = function(ctx, x, y, gameArea) {
             y = gameArea.getBottom();
             isJumping = false;
         }
-
         // Keep player within bounds vertically
         if (y < gameArea.getTop()) {
             y = gameArea.getTop();
             velocityY = 0;
+        }
+
+        let left = x-halfWidth;
+        let right = x+halfWidth;
+        let top = y-halfheight;
+        let bottom = y+sprite_height;
+        let currentBox = BoundingBox(ctx, top, left, bottom, right);
+
+        for (let i = 0; i < collisionBBs.length; i++) {
+            if (currentBox.intersect(collisionBBs[i])){
+                // collision to the block when jumping up
+                if (velocityY < 0){
+                    velocityY = 0;
+                    const offset = y - currentBox.getTop();
+                    y = collisionBBs[i].getBottom() + offset + 0.01;
+                    break;
+                }
+                // collision to the block when falling down
+                else if(velocityY >= 0){
+                    velocityY = 0;
+                    isJumping = false;
+                    const offset = currentBox.getBottom() - y;
+                    y = collisionBBs[i].getTop() - offset - 0.01;
+                    break;
+                }
+            };
+        };
+
+        // === GROUND DETECTION (allow jumping only when on ground) ===
+        let onGround = false;
+
+        left = x-halfWidth+10;
+        right = x+halfWidth-10;
+        top = y;
+        bottom = y+sprite_height+1;
+        Box = BoundingBox(ctx, top, left, bottom, right);
+
+        for (let i = 0; i < collisionBBs.length; i++) {
+            if (currentBox.intersect(collisionBBs[i])){
+                // collision to the block when jumping up
+                onGround = true;
+                break;
+            };
+        };
+
+        // Also count gameArea bottom as ground
+        if (y + 1 >= gameArea.getBottom() - 1) {
+            onGround = true;
+        }
+        // Now update isJumping flag properly
+        if (onGround) {
+            isJumping = false;  // Allow jump again
+        }
+        else{
+            isJumping = true; // Disable jump
         }
 
         sprite.setXY(x, y);
@@ -222,7 +316,7 @@ const Player = function(ctx, x, y, gameArea) {
         setHP,
         hurt: hurt,
         getAttackBoundingBox: getAttackBoundingBox,
-        getBoundingBox: sprite.getBoundingBox,
+        getBoundingBox: getBoundingBox,
         draw: sprite.draw,
         update: update
     };
