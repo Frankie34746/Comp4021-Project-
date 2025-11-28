@@ -1,6 +1,6 @@
 // Get the canvas and 2D context
 const cv = $("#gameCanvas").get(0);
-const context = canvas.getContext("2d");
+const context = cv.getContext("2d");
 
 cv.width = 800;
 cv.height = 500;
@@ -70,14 +70,13 @@ $("#register-form").on("submit", (e) => {
             socket.on("gameStart", () => {
                 $("#lobbyPage").hide();
                 $("#gamePage").show();
-                initGame();
             });
         }
     );
 });
 
 $(function() {
-    const gameArea = BoundingBox(context, 165, 60, 420, 800);
+    const gameArea = BoundingBox(context, 150, 20, 430, 775);
 
     const player = Player(context, 427, 240, gameArea); // The player
 
