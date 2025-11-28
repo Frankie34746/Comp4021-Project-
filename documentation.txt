@@ -10,8 +10,8 @@ The Player module. Manages state (position, velocity, direction, jumping, attack
 public/script/eventlistener.js
 Centralizes user input. Translates key presses/releases into calls to the Player (move, stop, jump, attack).
 
-public/script/main.js
+public/script/dungeonQuest.js
 The game loop and core logic. Updates the sprite state, advances physics, and renders each frame.
 
-public/game.html
+public/index.html
 HTML entry point to load and start the game. Creates the canvas and initializes the game’s scripts in order.
