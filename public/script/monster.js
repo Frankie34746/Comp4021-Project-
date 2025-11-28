@@ -4,8 +4,8 @@
 // - `y` - The initial y position of the monster
 // - `gameArea` - The bounding box of the game area
 const Monster = function(ctx, x, y, gameArea) {
-    // For identification
-    const id = Math.random().toString(36).substring(2, 9);
+    // Deterministic ID based on starting position
+    const id = `m_${Math.floor(x)}_${Math.floor(y)}`;
 
     // This is the sprite sequences of the monster facing different directions.
     // Assuming similar layout to player for simplicity; adjust as needed for actual spritesheet.
@@ -19,8 +19,8 @@ const Monster = function(ctx, x, y, gameArea) {
     const sprite = Sprite(ctx, x, y);
 
     // This is the moving direction: 1=Left, 3=Right
-    let direction = Math.random() > 0.5 ? 1 : 3;
-
+    let direction = x < 400 ? 3 : 1;  // Start moving right if left side, left if right side
+    
     // The sprite object is configured for the monster sprite here.
     // Assuming a separate spritesheet; replace with actual path if different.
     sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight)
