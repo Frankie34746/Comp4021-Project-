@@ -262,7 +262,7 @@ const gameLoop = function(time) {
                 }
             }
             if (playerBB.intersect(monsterBB)) {
-                    player.hurt(now);
+                    player.hurt(time);
             }
         }
         }
