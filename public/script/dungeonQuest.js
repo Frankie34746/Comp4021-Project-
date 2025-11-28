@@ -34,8 +34,8 @@ const initCanvas = function() {
         if (width === 0 || height === 0) {
             // If container is not yet sized, use the CSS dimensions from game-container
             // From CSS: width: 800px; height: 500px;
-            width = 800;
-            height = 500;
+            width = 1280;
+            height = 704;
             console.log("Container not yet sized, using fallback:", width, "x", height);
         }
         
