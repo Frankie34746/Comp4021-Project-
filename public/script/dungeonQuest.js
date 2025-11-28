@@ -1,5 +1,5 @@
 // Get the canvas and 2D context
-const canvas = $("#gameCanvas").get(0);
+const cv = $("#gameCanvas").get(0);
 const context = canvas.getContext("2d");
 
 canvas.width = 1920;
@@ -74,6 +74,25 @@ $("#register-form").on("submit", (e) => {
             });
         }
     );
+});
+
+$(function() {
+    const gameArea = BoundingBox(context, 165, 60, 420, 800);
+
+    const player = Player(context, 427, 240, gameArea); // The player
+
+    setupInputListeners(player);
+
+    function doFrame(now) {
+        /* Process the next frame */
+        player.update(now);
+        context.clearRect(0, 0, cv.width, cv.height);
+        player.draw();
+    
+        requestAnimationFrame(doFrame);
+    }
+
+    requestAnimationFrame(doFrame);
 });
 
 $("#frontPage").show();
