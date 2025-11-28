@@ -165,7 +165,10 @@ $("#register-form").on("submit", (e) => {
 
                 socket.on("paired", (data) => {
                     roomId = data.roomId;
-                    console.log(JSON.stringify(data))
+                    
+                    window.roomId = data.roomId;
+                    window.playerNum = ownUsername === data.player1 ? 1 : 2;
+                    
                     partnerUsername = ownUsername === data.player1 ? data.player2 : data.player1;
                     playerNum = ownUsername === data.player1 ? 1 : 2;
                     $(".player-list-container p").text(`Your Mighty Partner is: ${partnerUsername}`);
@@ -191,6 +194,33 @@ $("#register-form").on("submit", (e) => {
                     gameState.currentScreen = 'gamePage';
 
                     initializeGame();
+
+                    socket.on("action", (data) => {
+                        if (data.type === "move") {
+                            remotePlayer.move(data.dir);
+                        } else if (data.type === "stop") {
+                            remotePlayer.stop(data.dir);
+                        } else if (data.type === "jump") {
+                            remotePlayer.jump();
+                        } else if (data.type === "attack") {
+                            remotePlayer.attack();
+                        } else if (data.type === "speedUp") {
+                            remotePlayer.speedUp();
+                        } else if (data.type === "slowDown") {
+                            remotePlayer.slowDown();
+                        }
+                    });
+
+                    socket.on("killMonster", (data) => {
+                        const index = monsters.findIndex(m => m.getId() === data.monsterId);
+                        if (index > -1) {
+                            monsters.splice(index, 1);
+                        }
+                    });
+
+                    socket.on("updateHP", (data) => {
+                        remotePlayer.setHP(data.hp);
+                    });
                 });
             }
         }
@@ -205,8 +235,18 @@ $("#gameOverPage").hide();
 // ===================== GAME LOOP =====================
 
 // Initialize game variables
-let player = null;
+// Define start positions (adjust as needed for your game area)
+const player1StartX = 100;
+const player2StartX = 700;
+const startY = 240;
+
+let player1 = null;
+let player2 = null;
+let localPlayer = null;
+let remotePlayer = null;
+
 let monsters = null;
+
 let gameArea = null;
 let gameLoopId = null;
 
@@ -226,21 +266,29 @@ const initializeGame = function() {
             console.log("Bounding box created:", gameArea);
             
             // Create player in the specified position
-            console.log("Creating player at position (427, 240)...");
-            player = Player(context, 427, 240, gameArea);
-            console.log("Player created:", player);
-            
+            console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
+            player1 = Player(context, player1StartX, startY, gameArea);
+            player2 = Player(context, player2StartX, startY, gameArea);
+            console.log("Player created:", player1);
+            console.log("Player created:", player2);
+            if (playerNum === 1) {
+                localPlayer = player1;
+                remotePlayer = player2;
+            } else {
+                localPlayer = player2;
+                remotePlayer = player1;
+            }
+                        
             // Create monsters
             console.log("Creating monsters...");
             monsters = [
-                // Monster(context, 750, 240, gameArea),
-                Monster(context, 50, 240, gameArea)
+                Monster(context, 400, startY, gameArea)
             ];
             console.log("Monsters created:", monsters);
             
             // Set up input listeners for player
             console.log("Setting up input listeners...");
-            setupInputListeners(player);
+            setupInputListeners(localPlayer);
             console.log("Input listeners set up");
             
             // Start the game loop
@@ -272,102 +320,45 @@ const gameLoop = function(time) {
         context.fillText('DEBUG: Frame ' + frameCount, 20, 40);
         
         // Update player
-        if (player) {
-            try {
-                player.update(time);
-            } catch (error) {
-                console.error("Error updating player:", error);
-                context.fillText('ERROR: ' + error.message, 20, 80);
-            }
-        } else {
-            console.warn("player is null!");
-            context.fillText('player is null', 20, 80);
-        }
+        localPlayer.update(time);
+        remotePlayer.update(time);
         
         // Update monsters
-        if (monsters) {
-            monsters.forEach(monster => {
-                try {
-                    monster.update(time);
-                } catch (error) {
-                    console.error("Error updating monster:", error);
-                }
-            });
-        } else {
-            console.warn("monsters is null!");
-        }
+        monsters.forEach(monster => {
+            monster.update(time);
+        });
         
         // Collision detection
-        if (player && monsters) {
         for (let i = monsters.length - 1; i >= 0; i--) {
             const monster = monsters[i];
-            const playerBB = player.getBoundingBox();
+            const playerBB = localPlayer.getBoundingBox();
             const monsterBB = monster.getBoundingBox();
-            if (player.getAttackBoundingBox().intersect(monsterBB)) {
-                if (player.isAttacking()){
-                    monsters.splice(i, 1);
+            const attackBox = localPlayer.getAttackBoundingBox();
+
+            if (attackBox.intersect(monsterBB) && localPlayer.isAttacking()) {
+                const socket = Socket.getSocket();
+                socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+                monsters.splice(i, 1);
+                continue;
+            }
+
+            if (playerBB.intersect(monsterBB)) {
+                if (localPlayer.hurt(time)) {
+                    const socket = Socket.getSocket();
+                    socket.emit("updateHP", { roomId: window.roomId, playerNum: window.playerNum, hp: localPlayer.getHP() });
                 }
             }
-            if (playerBB.intersect(monsterBB)) {
-                    player.hurt(time);
-            }
         }
-        }
-        
-        // Draw player
-        if (player) {
-            try {
-                player.draw();
                 
-            // Visualize attack box
-            if (player.isAttacking()) {
-            const attackBox = player.getAttackBoundingBox();
-            context.strokeStyle = 'red';
-            context.lineWidth = 2;
-            context.strokeRect(
-                attackBox.getLeft(),
-                attackBox.getTop(),
-                attackBox.getRight() - attackBox.getLeft(),
-                attackBox.getBottom() - attackBox.getTop()
-            );
-            }
-            // Visualize player box
-            const Box = player.getBoundingBox();
-            context.strokeStyle = 'yellow';
-            context.lineWidth = 2;
-            context.strokeRect(
-                Box.getLeft(),
-                Box.getTop(),
-                Box.getRight() - Box.getLeft(),
-                Box.getBottom() - Box.getTop()
-            );
-            
-            } catch (error) {
-                console.error("Error drawing player:", error);
-            }
-        }
+        // Draw player
+        localPlayer.draw();
+        remotePlayer.draw();
         
         // Draw monsters
-        if (monsters) {
-            monsters.forEach(monster => {
-                try {
-                    monster.draw();
-                } catch (error) {
-                    console.error("Error drawing monster:", error);
-                }
-                // Visualize monster box
-                const Box = monster.getBoundingBox();
-                context.strokeStyle = 'green';
-                context.lineWidth = 2;
-                context.strokeRect(
-                    Box.getLeft(),
-                    Box.getTop(),
-                    Box.getRight() - Box.getLeft(),
-                    Box.getBottom() - Box.getTop()
-            );
-            });
-            
-        }
+        monsters.forEach(monster => {
+            monster.draw();
+        });
+        
     } catch (error) {
         console.error("Error in game loop:", error);
     }
