@@ -75,6 +75,18 @@ io.on("connection", (socket) => {
             io.to(room).emit("gameStart");
         }
     });
+
+    socket.on("action", (data) => {
+        socket.to(data.roomId).emit("action", data);
+    });
+
+    socket.on("killMonster", (data) => {
+        socket.to(data.roomId).emit("killMonster", data);
+    });
+
+    socket.on("updateHP", (data) => {
+        socket.to(data.roomId).emit("updateHP", data);
+    });
 });
 
 httpServer.listen(8000, () => {
