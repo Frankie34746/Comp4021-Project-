@@ -219,7 +219,7 @@ $("#register-form").on("submit", (e) => {
                     });
 
                     socket.on("updateHP", (data) => {
-                        remotePlayer.setHP(data.hp);
+                        // To be implemented
                     });
                 });
             }
