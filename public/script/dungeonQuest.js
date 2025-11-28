@@ -282,7 +282,8 @@ const initializeGame = function() {
             // Create monsters
             console.log("Creating monsters...");
             monsters = [
-                Monster(context, 400, startY, gameArea)
+                Monster(context, 100, startY, gameArea),   // Left patrol
+                Monster(context, 650, startY, gameArea)    // Right patrol
             ];
             console.log("Monsters created:", monsters);
             
@@ -319,45 +320,75 @@ const gameLoop = function(time) {
         context.font = '20px Arial';
         context.fillText('DEBUG: Frame ' + frameCount, 20, 40);
         
-        // Update player
-        localPlayer.update(time);
-        remotePlayer.update(time);
-        
+        // Update players
+        player1.update(time);
+        player2.update(time);
+
         // Update monsters
-        monsters.forEach(monster => {
-            monster.update(time);
-        });
+        if (monsters) {
+            monsters.forEach(monster => {
+                monster.update(time);
+            });
+        }
         
         // Collision detection
-        for (let i = monsters.length - 1; i >= 0; i--) {
-            const monster = monsters[i];
-            const playerBB = localPlayer.getBoundingBox();
-            const monsterBB = monster.getBoundingBox();
-            const attackBox = localPlayer.getAttackBoundingBox();
+        if (monsters && player1 && player2) {
+            for (let i = monsters.length - 1; i >= 0; i--) {
+                const monster = monsters[i];
+                const monsterBB = monster.getBoundingBox();
 
-            if (attackBox.intersect(monsterBB) && localPlayer.isAttacking()) {
-                const socket = Socket.getSocket();
-                socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
-                monsters.splice(i, 1);
-                continue;
-            }
-
-            if (playerBB.intersect(monsterBB)) {
-                if (localPlayer.hurt(time)) {
+                // Player 1 collisions
+                const p1BB = player1.getBoundingBox();
+                const p1AttackBB = player1.getAttackBoundingBox();
+                if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
                     const socket = Socket.getSocket();
-                    socket.emit("updateHP", { roomId: window.roomId, playerNum: window.playerNum, hp: localPlayer.getHP() });
+                    socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+                    monsters.splice(i, 1);
+                    continue;
+                }
+                if (p1BB.intersect(monsterBB)) {
+                    if (player1.hurt(time)) {
+                        const socket = Socket.getSocket();
+                        socket.emit("updateHP", { 
+                            roomId: window.roomId, 
+                            playerNum: 1, 
+                            hp: player1.getHP() 
+                        });
+                    }
+                }
+
+                // Player 2 collisions
+                const p2BB = player2.getBoundingBox();
+                const p2AttackBB = player2.getAttackBoundingBox();
+                if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
+                    const socket = Socket.getSocket();
+                    socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+                    monsters.splice(i, 1);
+                    continue;
+                }
+                if (p2BB.intersect(monsterBB)) {
+                    if (player2.hurt(time)) {
+                        const socket = Socket.getSocket();
+                        socket.emit("updateHP", { 
+                            roomId: window.roomId, 
+                            playerNum: 2, 
+                            hp: player2.getHP() 
+                        });
+                    }
                 }
             }
         }
                 
-        // Draw player
-        localPlayer.draw();
-        remotePlayer.draw();
-        
+        // Draw players
+        player1.draw();
+        player2.draw();
+
         // Draw monsters
-        monsters.forEach(monster => {
-            monster.draw();
-        });
+        if (monsters) {
+            monsters.forEach(monster => {
+                monster.draw();
+            });
+        }
         
     } catch (error) {
         console.error("Error in game loop:", error);
