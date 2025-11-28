@@ -2,8 +2,8 @@
 const cv = $("#gameCanvas").get(0);
 const context = canvas.getContext("2d");
 
-canvas.width = 1920;
-canvas.height = 1080;
+cv.width = 800;
+cv.height = 500;
 
 // Create the sounds objects
 const sounds = {
