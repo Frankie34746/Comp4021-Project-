@@ -90,6 +90,20 @@ const Player = function(ctx, x, y, gameArea) {
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
         return BoundingBox(ctx, top, left, bottom, right);
     };
+
+    const getBoundingBox = function() {
+        let { x, y } = sprite.getXY();
+        let halfWidth = sprite_width / 2;
+        let halfheight = sprite_height / 2;
+
+        let left = x-halfWidth;
+        let right = x+halfWidth;
+        let top = y-halfheight;
+        let bottom = y+sprite_height;
+
+        // Assuming BoundingBox takes ctx, top, left, bottom, right 
+        return BoundingBox(ctx, top, left, bottom, right);
+    };
     
     // This function sets the player's moving direction.
     // - `dir` - the moving direction (1: Left, 2: Up, 3: Right, 4: Down)
@@ -214,7 +228,7 @@ const Player = function(ctx, x, y, gameArea) {
         getHP: getHP,
         hurt: hurt,
         getAttackBoundingBox: getAttackBoundingBox,
-        getBoundingBox: sprite.getBoundingBox,
+        getBoundingBox: getBoundingBox,
         draw: sprite.draw,
         update: update
     };
