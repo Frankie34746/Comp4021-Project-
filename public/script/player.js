@@ -281,6 +281,28 @@ const Player = function(ctx, x, y, gameArea, map) {
                     }
                 };
             };
+                        // 2. Check pushblock collision and try to push
+            for (let block of pushblocks) {
+                const blockBox = block.getBoundingBox();
+                    if (currentBox.intersect(blockBox)) {
+                    // Only try to push if player is moving into the block
+                    if (direction === 1 || direction === 3) {
+                        const pushSuccess = block.tryPush(direction, speed / 60, pushblocks);
+                            if (!pushSuccess) {
+                            // Cannot push → stop player
+                            if (direction === 1) {
+                                const offset = x - currentBox.getLeft();
+                                x = blockBox.getRight() + offset + 0.01;
+                            } else if (direction === 3) {
+                                const offset = currentBox.getRight() - x;
+                                x = blockBox.getLeft() - offset - 0.01;
+                            }
+                        }
+                        // If push succeeded, player keeps moving → no break needed
+                }
+                break;
+            }
+        }
         }
 
         // Vertical Physics (Gravity and Jump) - applies whether attacking or not
@@ -324,6 +346,23 @@ const Player = function(ctx, x, y, gameArea, map) {
                 }
             };
         };
+                // Pushblock vertical collision (player can stand on them)
+        for (let block of pushblocks) {
+            const blockBox = block.getBoundingBox();
+            if (currentBox.intersect(blockBox)) {
+                if (velocityY < 0) {
+                    velocityY = 0;
+                    const offset = y - currentBox.getTop();
+                    y = blockBox.getBottom() + offset + 0.01;
+                } else if (velocityY >= 0) {
+                    velocityY = 0;
+                    isJumping = false;
+                    const offset = currentBox.getBottom() - y;
+                    y = blockBox.getTop() - offset - 0.01;
+                }
+                break;
+            }
+        }
 
         // === GROUND DETECTION (allow jumping only when on ground) ===
         let onGround = false;
@@ -332,7 +371,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         right = x+halfWidth-10;
         top = y;
         bottom = y+sprite_height+1;
-        Box = BoundingBox(ctx, top, left, bottom, right);
+        groundCheckBox = BoundingBox(ctx, top, left, bottom, right);
 
         for (let i = 0; i < collisionBBs.length; i++) {
             if (currentBox.intersect(collisionBBs[i])){
@@ -341,6 +380,12 @@ const Player = function(ctx, x, y, gameArea, map) {
                 break;
             };
         };
+        for (let block of pushblocks) {
+            if (groundCheckBox.intersect(block.getBoundingBox())) {
+                onGround = true;
+                break;
+            }
+        }
 
         // Also count gameArea bottom as ground
         if (y + 1 >= gameArea.getBottom() - 1) {
@@ -379,4 +424,3 @@ const Player = function(ctx, x, y, gameArea, map) {
         update: update
     };
 };
-
