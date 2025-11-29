@@ -244,6 +244,7 @@ let player1 = null;
 let player2 = null;
 let localPlayer = null;
 let remotePlayer = null;
+let backgroundImg = null;
 
 let monsters = null;
 
@@ -265,41 +266,47 @@ const initializeGame = function() {
             gameArea = BoundingBox(context, 64, 32, canvas.height-64, canvas.width-32);
             console.log("Bounding box created:", gameArea);
 
-            // Build maps
-            console.log("Building map...");
-            maps = [
-                map(context, map1),
-                // map(context, map2),   // add more maps here later
-                // map(context, map3),
-            ];
-            console.log("Maps built:", maps);
+            // loading background image
+const backgroundImg = new Image();
+backgroundImg.src = "/res/map1.png";
+backgroundImg.onload = function () {  // ← Fixed: no () here
 
-            const selectedMap = maps[Math.floor(Math.random() * maps.length)];
-            console.log("Randomly selected map:", selectedMap);
+    console.log("Background loaded!");
+    // Build maps
+    console.log("Building map...");
+    maps = [
+        map(context, map1, backgroundImg),
+        // map(context, map2),   // add more maps here later
+        // map(context, map3),
+    ];
+    console.log("Maps built:", maps);
 
-            // Create player in the specified position
-            console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
-            player1 = Player(context, player1StartX, startY, gameArea,selectedMap);
-            player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
-            console.log("Player created:", player1);
-            console.log("Player created:", player2);
-            if (playerNum === 1) {
-                localPlayer = player1;
-                remotePlayer = player2;
-            } else {
-                localPlayer = player2;
-                remotePlayer = player1;
-            }
-                        
-            // Create monsters
-            console.log("Creating monsters...");
-            monsters = [
-                Monster(context, 100, startY, gameArea),   // Left patrol
-                Monster(context, 650, startY, gameArea)    // Right patrol
-            ];
-            console.log("Monsters created:", monsters);
+    const selectedMap = maps[Math.floor(Math.random() * maps.length)];
+    console.log("Randomly selected map:", selectedMap);
+
+    // Create player in the specified position
+    console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
+    player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
+    player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
+    console.log("Player created:", player1);
+    console.log("Player created:", player2);
+    if (playerNum === 1) {
+        localPlayer = player1;
+        remotePlayer = player2;
+    } else {
+        localPlayer = player2;
+        remotePlayer = player1;
+    }
             
-            // Set up input listeners for player
+    // Create monsters
+    console.log("Creating monsters...");
+    monsters = [
+        Monster(context, 100, startY, gameArea),   // Left patrol
+        Monster(context, 650, startY, gameArea)    // Right patrol
+    ];
+    console.log("Monsters created:", monsters);
+
+                // Set up input listeners for player
             console.log("Setting up input listeners...");
             setupInputListeners(localPlayer);
             console.log("Input listeners set up");
@@ -308,6 +315,9 @@ const initializeGame = function() {
             console.log("Starting game loop...");
             gameLoopId = requestAnimationFrame(gameLoop);
             console.log("Game initialized and loop started");
+};
+
+            
         } catch (error) {
             console.error("Error initializing game:", error);
             console.error("Stack trace:", error.stack);
