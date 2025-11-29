@@ -3,7 +3,7 @@
 // - `x` - The initial x position of the monster
 // - `y` - The initial y position of the monster
 // - `gameArea` - The bounding box of the game area
-const Monster = function(ctx, x, y, gameArea, map) {
+const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     // Deterministic ID based on starting position
     const id = `m_${Math.floor(x)}_${Math.floor(y)}`;
 
@@ -63,6 +63,17 @@ const Monster = function(ctx, x, y, gameArea, map) {
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
         return BoundingBox(ctx, top, left, bottom, right);
     };
+
+    const getwithtreasure = function(){
+        return withtreasure;
+    }
+
+    const droptreasure = function(){
+        if (withtreasure){
+            let { x, y } = sprite.getXY();
+            return treasure(context, x, y);
+        }
+    }
 
     // This function updates the monster.
     // - `time` - The timestamp when this function is called
@@ -172,6 +183,8 @@ const Monster = function(ctx, x, y, gameArea, map) {
         getBoundingBox: getBoundingBox,
         draw: sprite.draw,
         update: update,
-        getId
+        getId,
+        getwithtreasure: getwithtreasure,
+        droptreasure: droptreasure
     };
 };
