@@ -451,15 +451,15 @@ backgroundImg.onload = function () {  // ← Fixed: no () here
     console.log("Creating monsters...");
     monsters = [
         Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
-        Monster(context, 650, startY, gameArea, selectedMap)    // Right patrol
+        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
     ];
     console.log("Monsters created:", monsters);
     
         // Create treasuress
     console.log("Creating treasures...");
     treasures = [
-        treasure(context, 100, startY-160, gameArea),  
-        treasure(context, 650, startY-160, gameArea)    
+        treasure(context, 100, startY-160),  
+        treasure(context, 650, startY-160)    
     ];
     console.log("Treasures created:", treasures);
 
@@ -545,6 +545,10 @@ const gameLoop = function(time) {
                 const p1BB = player1.getBoundingBox();
                 const p1AttackBB = player1.getAttackBoundingBox();
                 if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
+                    if (monster.getwithtreasure()){
+                        treasures.push(monster.droptreasure());
+                        console.log("treasure dropped");
+                    }
                     const socket = Socket.getSocket();
                     socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
                     monsters.splice(i, 1);
@@ -570,6 +574,10 @@ const gameLoop = function(time) {
                 const p2BB = player2.getBoundingBox();
                 const p2AttackBB = player2.getAttackBoundingBox();
                 if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
+                    if (monster.getwithtreasure()){
+                        treasures.push(monster.droptreasure())
+                        console.log("treasure dropped")
+                    }
                     const socket = Socket.getSocket();
                     socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
                     monsters.splice(i, 1);
@@ -659,6 +667,7 @@ const gameLoop = function(time) {
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
                     treasures.splice(i, 1);
                     collectedTreasures++;
+                    console.log("Now u have ",collectedTreasures," treasure(s)");
                 }
             }
         }
