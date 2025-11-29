@@ -336,6 +336,9 @@ let player2 = null;
 let localPlayer = null;
 let remotePlayer = null;
 let selectedMap = null;
+let currentlevel = 1;
+let remainingmapindex = [0,1,2]
+let isTransitioning = false;
 
 let monsters = null;
 
@@ -591,6 +594,9 @@ const initializeGame = function(mapIndex, spawnData = null) {
 
                     selectedMap = maps[mapIndex];
                     console.log("Selected map by index:", selectedMap);
+                    
+                    // Remove selected map index from remaining
+                    remainingmapindex = remainingmapindex.filter(idx => idx !== mapIndex);
 
                     // Create player in the specified position
                     console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
@@ -666,6 +672,49 @@ const initializeGame = function(mapIndex, spawnData = null) {
             console.error("Error initializing game:", error);
             console.error("Stack trace:", error.stack);
         }
+    }
+};
+
+// Function to jump to next level
+const jumptonextlevel = function() {
+    console.log(currentlevel)
+    if (currentlevel < 3) {
+        currentlevel++;
+        
+        // Pick random from remaining
+        const randIdx = Math.floor(Math.random() * remainingmapindex.length);
+        const nextMapIndex = remainingmapindex[randIdx];
+        remainingmapindex.splice(randIdx, 1);
+        
+        // Generate new spawn data
+        const newSpawnData = generateSpawnPositions(nextMapIndex);
+        
+        // For multiplayer sync (host only)
+        if (!DEBUG_MODE && playerNum === 1) {
+            const socket = Socket.getSocket();
+            if (socket && window.roomId) {
+                socket.emit("nextLevel", { 
+                    roomId: window.roomId, 
+                    nextMapIndex: nextMapIndex,
+                    spawnData: newSpawnData
+                });
+            }
+        }
+        
+        // Reset level-specific state
+        gameState.treasuresCollected = 0;
+        $("#treasureCount").text(`${gameState.treasuresCollected}`);
+        gameState.gameActive = true;
+        isTransitioning = false;
+        
+        // Initialize next level
+        initializeGame(nextMapIndex, newSpawnData);
+    } else {
+        const socket = Socket.getSocket();
+        if (socket && window.roomId) {
+            socket.emit("gameOver", { roomId: window.roomId });
+        }
+        showGameOver();
     }
 };
 
@@ -940,6 +989,28 @@ const gameLoop = function(time) {
                 }
             }
         }
+
+        // Check for level completion: both players in portal (host only)
+        if (gameState.treasuresCollected >= 5) {
+                const portalBB = Portal.getBoundingBox();
+                const p1BB = player1.getBoundingBox();
+                const p2BB = player2.getBoundingBox();
+                
+                console.log("Portal opens!...");
+                if (p1BB.intersect(portalBB) && p2BB.intersect(portalBB) && !isTransitioning) {
+                    console.log("Both players entered portal! Advancing to next level...");
+                    isTransitioning = true;
+                    
+                    // Cancel current game loop
+                    cancelAnimationFrame(gameLoopId);
+                    
+                    gameState.gameActive = false;
+                    jumptonextlevel();
+                    
+                    return;  // Stop current frame
+                }
+        }
+        
 
         // Draw monsters
         if (monsters) {
