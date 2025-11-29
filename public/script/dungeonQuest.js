@@ -79,10 +79,6 @@ let playerNum;
 let ownUsername;
 let partnerUsername;
 
-// Useful Const and Variables (In-game)
-const REQUIRED_TREASURES = 5;       // The # of necessary treasures to open the escape portal
-let collectedTreasures = 0;         // The # of treasures collected
-
 // DEBUG MODE: Check if debug parameter is in URL
 const urlParams = new URLSearchParams(window.location.search);
 const DEBUG_MODE = urlParams.get('debug') === 'true';
@@ -96,7 +92,7 @@ const gameState = {
     gameActive: false,
     level: 1,
     treasuresCollected: 0,
-    totalTreasures: REQUIRED_TREASURES,
+    totalTreasures: 5,
     timeTaken: 300,
     cheatMode: false,
     playerDeaths: { player1: 0, player2: 0 }
@@ -667,10 +663,9 @@ const gameLoop = function(time) {
 
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
                     treasures.splice(i, 1);
-                    collectedTreasures++;
-                    gameState.treasuresCollected = collectedTreasures;
-                    console.log("Now u have ",collectedTreasures," treasure(s)");
-                    $("#treasureCount").text(`${collectedTreasures}`)
+                    gameState.treasuresCollected++
+                    console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
+                    $("#treasureCount").text(`${gameState.treasuresCollected}`)
                 }
             }
         }
