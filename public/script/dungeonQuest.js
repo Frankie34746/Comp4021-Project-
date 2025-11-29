@@ -641,7 +641,7 @@ const initializeGame = function(mapIndex, spawnData = null) {
                     
                     // Create portal
                     console.log("Creating portal...");
-                    Portal = portal(context, 256, 512) 
+                    Portal = portal(context, player1StartX, startY-90) 
                     console.log("portal created:", Portal);
                     
                     // Set up input listeners for player
@@ -735,8 +735,9 @@ const gameLoop = function(time) {
             selectedMap.draw();
         }
 
-        // Draw portal
-        Portal.draw();
+       // Draw portal if collected enough treasure
+        if (gameState.treasuresCollected >= 5)
+            Portal.draw();
         
         // Draw debug info
         context.fillStyle = 'black';
