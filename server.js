@@ -150,9 +150,30 @@ io.on("connection", (socket) => {
     socket.on("startGame", (data) => {
         const room = Array.from(socket.rooms).find(r => r !== socket.id);
         if (room === data.roomId) {
-            const mapIndex = data.mapIndex
-            io.to(room).emit("gameStart", { mapIndex } );
+            const mapIndex = data.mapIndex;
+            const spawnData = data.spawnData; // Receive spawn positions from player1
+            io.to(room).emit("gameStart", { mapIndex, spawnData } );
         }
+    });
+
+    // Handle monster position sync from player 1
+    socket.on("syncMonsters", (data) => {
+        socket.to(data.roomId).emit("syncMonsters", data);
+    });
+
+    // Handle player position sync
+    socket.on("syncPosition", (data) => {
+        socket.to(data.roomId).emit("syncPosition", data);
+    });
+
+    // Handle treasure collection sync
+    socket.on("collectTreasure", (data) => {
+        socket.to(data.roomId).emit("collectTreasure", data);
+    });
+
+    // Handle pushblock position sync
+    socket.on("syncPushblocks", (data) => {
+        socket.to(data.roomId).emit("syncPushblocks", data);
     });
 
     socket.on("action", (data) => {

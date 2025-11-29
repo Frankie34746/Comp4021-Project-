@@ -57,8 +57,8 @@ const treasure = function(ctx, x, y, color) {
         return BoundingBox(ctx, top, left, bottom, right);
     };
 
-    // Randomize initially
-    randomize(gameArea);
+    // Don't randomize initially - use the provided color parameter
+    // randomize(gameArea);
 
     // The methods are returned as an object here.
     return {

@@ -71,7 +71,10 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     const droptreasure = function(){
         if (withtreasure){
             let { x, y } = sprite.getXY();
-            return treasure(context, x, y);
+            // Random color for dropped treasure
+            const colors = ["green", "red", "yellow", "purple"];
+            const randomColor = colors[Math.floor(Math.random() * 4)];
+            return treasure(context, x, y, randomColor);
         }
     }
 
@@ -185,6 +188,10 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         update: update,
         getId,
         getwithtreasure: getwithtreasure,
-        droptreasure: droptreasure
+        droptreasure: droptreasure,
+        getXY: sprite.getXY,
+        setXY: sprite.setXY,
+        getDirection: () => direction,
+        setDirection: (dir) => { direction = dir; prevDirection = dir; }
     };
 };

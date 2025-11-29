@@ -143,7 +143,8 @@ $("#register-form").on("submit", (e) => {
                 setTimeout(() => {
                     console.log("setTimeout callback: calling initializeGame");
                     const mapIndex = Math.floor(Math.random() * 3);
-                    initializeGame(mapIndex);
+                    const spawnData = generateSpawnPositions(mapIndex);
+                    initializeGame(mapIndex, spawnData);
                 }, 100);
             } else {
                 console.log("Normal mode: showing lobby");
@@ -179,7 +180,9 @@ $("#register-form").on("submit", (e) => {
                 
                 $("#startGameBtn").on("click", () => {
                     const mapIndex = Math.floor(Math.random() * 3);
-                    socket.emit("startGame", {roomId: roomId, mapIndex: mapIndex});
+                    // Player 1 generates spawn data and sends to server
+                    const spawnData = generateSpawnPositions(mapIndex);
+                    socket.emit("startGame", {roomId: roomId, mapIndex: mapIndex, spawnData: spawnData});
                 });
 
                 socket.on("gameStart", (data) => {
@@ -191,7 +194,7 @@ $("#register-form").on("submit", (e) => {
                     gameState.username = username;
                     gameState.currentScreen = 'gamePage';
 
-                    initializeGame(data.mapIndex);
+                    initializeGame(data.mapIndex, data.spawnData);
 
                     socket.on("action", (data) => {
                         if (data.type === "move") {
@@ -229,6 +232,57 @@ $("#register-form").on("submit", (e) => {
                     socket.on("gameOver", (data) => {
                         if (gameState.gameActive) {
                             showGameOver();
+                        }
+                    });
+
+                    // Listen for monster position sync (Player 2 receives from Player 1)
+                    socket.on("syncMonsters", (data) => {
+                        if (playerNum === 2 && monsters) {
+                            data.monsters.forEach(syncData => {
+                                const monster = monsters.find(m => m.getId() === syncData.id);
+                                if (monster) {
+                                    // Update monster position and direction
+                                    monster.setXY(syncData.x, syncData.y);
+                                    monster.setDirection(syncData.direction);
+                                }
+                            });
+                        }
+                    });
+
+                    // Listen for player position sync
+                    socket.on("syncPosition", (data) => {
+                        if (data.playerNum === 1 && playerNum === 2) {
+                            // Player 2 receives Player 1's position
+                            player1.setXY(data.x, data.y);
+                        } else if (data.playerNum === 2 && playerNum === 1) {
+                            // Player 1 receives Player 2's position
+                            player2.setXY(data.x, data.y);
+                        }
+                    });
+
+                    // Listen for treasure collection sync
+                    socket.on("collectTreasure", (data) => {
+                        if (treasures) {
+                            const index = treasures.findIndex(t => {
+                                const pos = t.getXY();
+                                return Math.abs(pos.x - data.x) < 5 && Math.abs(pos.y - data.y) < 5;
+                            });
+                            if (index > -1) {
+                                treasures.splice(index, 1);
+                                gameState.treasuresCollected++;
+                                $("#treasureCount").text(`${gameState.treasuresCollected}`);
+                            }
+                        }
+                    });
+
+                    // Listen for pushblock position sync (Player 2 receives from Player 1)
+                    socket.on("syncPushblocks", (data) => {
+                        if (playerNum === 2 && pushblocks && data.pushblocks) {
+                            data.pushblocks.forEach((pbData, index) => {
+                                if (pushblocks[index]) {
+                                    pushblocks[index].setXY(pbData.x, pbData.y);
+                                }
+                            });
                         }
                     });
                 });
@@ -395,8 +449,97 @@ const displayLeaderboard = function(leaderboard) {
     });
 };
 
+// Generate spawn positions for monsters and treasures (called by Player 1)
+const generateSpawnPositions = function(mapIndex) {
+    const tileSize = 32;
+    const mapWidth = 40;
+    
+    // Get collision map data
+    const collisionMaps = [map1, map2, map3];
+    const collisions = collisionMaps[mapIndex];
+    
+    // Helper function to check if a position collides with map collision blocks
+    const isPositionValid = function(x, y) {
+        // Check distance from player spawn points
+        const minDistanceFromPlayer = 200; // Minimum 200 pixels from player spawn
+        const distToP1 = Math.sqrt(Math.pow(x - player1StartX, 2) + Math.pow(y - startY, 2));
+        const distToP2 = Math.sqrt(Math.pow(x - player2StartX, 2) + Math.pow(y - startY, 2));
+        
+        if (distToP1 < minDistanceFromPlayer || distToP2 < minDistanceFromPlayer) {
+            return false;
+        }
+        
+        // Check collision with map tiles (expanded check area for safety)
+        const checkRadius = 64; // Check 64 pixels around the spawn point
+        for (let dx = -checkRadius; dx <= checkRadius; dx += tileSize) {
+            for (let dy = -checkRadius; dy <= checkRadius; dy += tileSize) {
+                const checkX = x + dx;
+                const checkY = y + dy;
+                
+                // Calculate tile index
+                const tileCol = Math.floor(checkX / tileSize);
+                const tileRow = Math.floor(checkY / tileSize);
+                const tileIndex = tileRow * mapWidth + tileCol;
+                
+                // Check if this tile is a collision tile (non-zero value)
+                if (tileIndex >= 0 && tileIndex < collisions.length && collisions[tileIndex] !== 0) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    };
+    
+    // Generate random valid position
+    const generateValidPosition = function(minY = 100, maxY = 600) {
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        while (attempts < maxAttempts) {
+            const x = 100 + Math.random() * (1180 - 100); // Range: 100 to 1180
+            const y = minY + Math.random() * (maxY - minY);
+            
+            if (isPositionValid(x, y)) {
+                return { x, y };
+            }
+            attempts++;
+        }
+        
+        // Fallback to safe positions if random generation fails
+        console.warn("Could not find valid random position, using fallback");
+        return { x: 400 + Math.random() * 480, y: 300 };
+    };
+    
+    // Generate 5 treasure positions with colors
+    const treasurePositions = [];
+    const colors = ["green", "red", "yellow", "purple"];
+    for (let i = 0; i < 5; i++) {
+        const pos = generateValidPosition(100, 550);
+        pos.color = colors[i % 4]; // Assign color
+        treasurePositions.push(pos);
+    }
+    
+    // Generate monster positions (some with treasures)
+    const monsterPositions = [];
+    const numMonsters = 5; // Generate 5 monsters
+    for (let i = 0; i < numMonsters; i++) {
+        const pos = generateValidPosition(100, 600);
+        // 40% chance for monster to have treasure
+        pos.withTreasure = Math.random() < 0.4;
+        monsterPositions.push(pos);
+    }
+    
+    console.log("Generated spawn data:", { treasurePositions, monsterPositions });
+    
+    return {
+        treasures: treasurePositions,
+        monsters: monsterPositions
+    };
+};
+
 // Initialize the game
-const initializeGame = function(mapIndex) {
+const initializeGame = function(mapIndex, spawnData = null) {
     console.log("Initializing game with mapIndex:", mapIndex);
     console.log("gameState.gameActive:", gameState.gameActive);
     console.log("canvas:", canvas);
@@ -455,21 +598,30 @@ const initializeGame = function(mapIndex) {
                         remotePlayer = player1;
                     }
                             
-                    // Create monsters
-                    console.log("Creating monsters...");
-                    monsters = [
-                        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
-                        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
-                    ];
-                    console.log("Monsters created:", monsters);
+                    // Create monsters and treasures based on spawn data
+                    console.log("Creating monsters and treasures from spawn data...");
                     
-                    // Create treasures
-                    console.log("Creating treasures...");
-                    treasures = [
-                        treasure(context, 100, startY-160),  
-                        treasure(context, 650, startY-160)    
-                    ];
-                    console.log("Treasures created:", treasures);
+                    // If no spawn data (debug mode), generate it
+                    if (!spawnData) {
+                        console.log("No spawn data provided, generating new spawn data...");
+                        spawnData = generateSpawnPositions(mapIndex);
+                    }
+                    
+                    // Create monsters from spawn data
+                    monsters = [];
+                    spawnData.monsters.forEach((monsterData, index) => {
+                        const monster = Monster(context, monsterData.x, monsterData.y, gameArea, selectedMap, monsterData.withTreasure);
+                        monsters.push(monster);
+                    });
+                    console.log(`Created ${monsters.length} monsters`);
+                    
+                    // Create treasures from spawn data
+                    treasures = [];
+                    spawnData.treasures.forEach((treasureData, index) => {
+                        const treasureObj = treasure(context, treasureData.x, treasureData.y, treasureData.color || "green");
+                        treasures.push(treasureObj);
+                    });
+                    console.log(`Created ${treasures.length} treasures`);
 
                     // Create pushblocks
                     console.log("Creating pushblocks...");
@@ -501,6 +653,9 @@ const initializeGame = function(mapIndex) {
 
 // Game loop function
 let frameCount = 0;
+let lastSyncTime = 0;
+const SYNC_INTERVAL = 100; // Sync every 100ms (10 times per second)
+
 const gameLoop = function(time) {
     frameCount++;
     if (frameCount % 60 === 0) {
@@ -508,6 +663,52 @@ const gameLoop = function(time) {
     }
     
     try {
+        // Periodic synchronization (Player 1 sends updates to Player 2)
+        if (!DEBUG_MODE && playerNum === 1 && time - lastSyncTime > SYNC_INTERVAL) {
+            const socket = Socket.getSocket();
+            if (socket && window.roomId) {
+                // Sync monster positions and directions
+                const monsterData = monsters.map(m => ({
+                    id: m.getId(),
+                    x: m.getXY().x,
+                    y: m.getXY().y,
+                    direction: m.getDirection()
+                }));
+                socket.emit("syncMonsters", { roomId: window.roomId, monsters: monsterData });
+                
+                // Sync player 1 position
+                socket.emit("syncPosition", { 
+                    roomId: window.roomId, 
+                    playerNum: 1,
+                    x: player1.getXY().x,
+                    y: player1.getXY().y
+                });
+                
+                // Sync pushblock positions
+                const pushblockData = pushblocks.map(pb => ({
+                    x: pb.getXY().x,
+                    y: pb.getXY().y
+                }));
+                socket.emit("syncPushblocks", { roomId: window.roomId, pushblocks: pushblockData });
+            }
+            lastSyncTime = time;
+        }
+        
+        // Player 2 also sends position updates
+        if (!DEBUG_MODE && playerNum === 2 && time - lastSyncTime > SYNC_INTERVAL) {
+            const socket = Socket.getSocket();
+            if (socket && window.roomId) {
+                // Sync player 2 position
+                socket.emit("syncPosition", { 
+                    roomId: window.roomId, 
+                    playerNum: 2,
+                    x: player2.getXY().x,
+                    y: player2.getXY().y
+                });
+            }
+            lastSyncTime = time;
+        }
+        
         // Clear the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -694,10 +895,23 @@ const gameLoop = function(time) {
                 const p2BB = player2.getBoundingBox();
 
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
+                    const treasurePos = treasure.getXY();
                     treasures.splice(i, 1);
                     gameState.treasuresCollected++;
                     console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
-                    $("#treasureCount").text(`${gameState.treasuresCollected}`)
+                    $("#treasureCount").text(`${gameState.treasuresCollected}`);
+                    
+                    // Sync treasure collection to other player
+                    if (!DEBUG_MODE) {
+                        const socket = Socket.getSocket();
+                        if (socket && window.roomId) {
+                            socket.emit("collectTreasure", { 
+                                roomId: window.roomId, 
+                                x: treasurePos.x, 
+                                y: treasurePos.y 
+                            });
+                        }
+                    }
                 }
             }
         }

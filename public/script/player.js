@@ -227,6 +227,9 @@ const Player = function(ctx, x, y, gameArea, map) {
     const update = function(time) {
         let { x, y } = sprite.getXY();
 
+        // Track if player is pushing a block (used later for collision logic)
+        let isPushingBlock = false;
+
         // Stop movement if HP is 0 and maintain death animation
         if (hp <= 0) {
             direction = 0;
@@ -291,7 +294,7 @@ const Player = function(ctx, x, y, gameArea, map) {
                     if (direction === 1 || direction === 3) {
                         const pushSuccess = block.tryPush(direction, speed / 60, pushblocks);
                         if (!pushSuccess) {
-                            // Cannot push → stop player
+                            // Cannot push → stop player at the edge of block
                             if (direction === 1) {
                                 const offset = x - currentBox.getLeft();
                                 x = blockBox.getRight() + offset + 0.01;
@@ -299,8 +302,12 @@ const Player = function(ctx, x, y, gameArea, map) {
                                 const offset = currentBox.getRight() - x;
                                 x = blockBox.getLeft() - offset - 0.01;
                             }
+                            break;
+                        } else {
+                            // Push succeeded - keep player at same relative position
+                            // Don't let player climb on top while pushing
+                            isPushingBlock = true;
                         }
-                        // If push succeeded, player keeps moving → no break needed
                     }
                     break;
                 }
@@ -363,20 +370,23 @@ const Player = function(ctx, x, y, gameArea, map) {
         }
 
         // Pushblock vertical collision (player can stand on them)
-        for (let block of pushblocks) {
-            const blockBox = block.getBoundingBox();
-            if (currentBox.intersect(blockBox)) {
-                if (velocityY < 0) {
-                    velocityY = 0;
-                    const offset = y - currentBox.getTop();
-                    y = blockBox.getBottom() + offset + 0.01;
-                } else if (velocityY >= 0) {
-                    velocityY = 0;
-                    isJumping = false;
-                    const offset = currentBox.getBottom() - y;
-                    y = blockBox.getTop() - offset - 0.01;
+        // But don't apply vertical collision if player is actively pushing horizontally
+        if (!isPushingBlock) {
+            for (let block of pushblocks) {
+                const blockBox = block.getBoundingBox();
+                if (currentBox.intersect(blockBox)) {
+                    if (velocityY < 0) {
+                        velocityY = 0;
+                        const offset = y - currentBox.getTop();
+                        y = blockBox.getBottom() + offset + 0.01;
+                    } else if (velocityY >= 0) {
+                        velocityY = 0;
+                        isJumping = false;
+                        const offset = currentBox.getBottom() - y;
+                        y = blockBox.getTop() - offset - 0.01;
+                    }
+                    break;
                 }
-                break;
             }
         }
 
@@ -411,10 +421,13 @@ const Player = function(ctx, x, y, gameArea, map) {
             }
         }
 
-        for (let block of pushblocks) {
-            if (groundCheckBox.intersect(block.getBoundingBox())) {
-                onGround = true;
-                break;
+        // Only count pushblock as ground if not actively pushing it
+        if (!isPushingBlock) {
+            for (let block of pushblocks) {
+                if (groundCheckBox.intersect(block.getBoundingBox())) {
+                    onGround = true;
+                    break;
+                }
             }
         }
 
@@ -452,6 +465,8 @@ const Player = function(ctx, x, y, gameArea, map) {
         getAttackBoundingBox: getAttackBoundingBox,
         getBoundingBox: getBoundingBox,
         draw: sprite.draw,
-        update: update
+        update: update,
+        getXY: sprite.getXY,
+        setXY: sprite.setXY
     };
 };
