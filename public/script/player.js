@@ -334,11 +334,6 @@ const Player = function(ctx, x, y, gameArea, map) {
             y = gameArea.getBottom();
             isJumping = false;
         }
-        // Keep player within bounds vertically
-        if (y < gameArea.getTop()) {
-            y = gameArea.getTop();
-            velocityY = 0;
-        }
 
         let left = x-halfWidth / 2;
         let right = x+halfWidth / 2;
@@ -404,7 +399,13 @@ const Player = function(ctx, x, y, gameArea, map) {
                 break;
             }
         }
-
+        
+        // Keep player within bounds vertically
+        if (y < gameArea.getTop()) {
+            y = gameArea.getTop();
+            velocityY = 0;
+        }
+        
         // === GROUND DETECTION (allow jumping only when on ground) ===
         let onGround = false;
 
@@ -474,3 +475,4 @@ const Player = function(ctx, x, y, gameArea, map) {
         update: update
     };
 };
+
