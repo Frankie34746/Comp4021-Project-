@@ -143,10 +143,11 @@ $("#register-form").on("submit", (e) => {
                 gameState.currentScreen = 'gamePage';
                 
                 console.log("Scheduling initializeGame after 100ms");
-                // Initialize game immediately
+                // Initialize game immediately with random mapIndex
                 setTimeout(() => {
                     console.log("setTimeout callback: calling initializeGame");
-                    initializeGame();
+                    const mapIndex = Math.floor(Math.random() * 3);
+                    initializeGame(mapIndex);
                 }, 100);
             } else {
                 console.log("Normal mode: showing lobby");
@@ -181,10 +182,11 @@ $("#register-form").on("submit", (e) => {
                 });
                 
                 $("#startGameBtn").on("click", () => {
-                    socket.emit("startGame", roomId);
+                    const mapIndex = Math.floor(Math.random() * 3);
+                    socket.emit("startGame", {roomId: roomId, mapIndex: mapIndex});
                 });
 
-                socket.on("gameStart", () => {
+                socket.on("gameStart", (data) => {
                     $("#lobbyPage").hide();
                     $("#gamePage").show();
 
@@ -193,7 +195,7 @@ $("#register-form").on("submit", (e) => {
                     gameState.username = username;
                     gameState.currentScreen = 'gamePage';
 
-                    initializeGame();
+                    initializeGame(data.mapIndex);
 
                     socket.on("action", (data) => {
                         if (data.type === "move") {
@@ -274,7 +276,7 @@ let player1 = null;
 let player2 = null;
 let localPlayer = null;
 let remotePlayer = null;
-let backgroundImg = null;
+let selectedMap = null;
 
 let monsters = null;
 
@@ -398,8 +400,8 @@ const displayLeaderboard = function(leaderboard) {
 };
 
 // Initialize the game
-const initializeGame = function() {
-    console.log("Initializing game...");
+const initializeGame = function(mapIndex) {
+    console.log("Initializing game with mapIndex:", mapIndex);
     console.log("gameState.gameActive:", gameState.gameActive);
     console.log("canvas:", canvas);
     console.log("context:", context);
@@ -415,75 +417,85 @@ const initializeGame = function() {
             gameArea = BoundingBox(context, 64, 32, canvas.height-64, canvas.width-32);
             console.log("Bounding box created:", gameArea);
 
-            // loading background image
-const backgroundImg = new Image();
-backgroundImg.src = "/res/map1.png";
-backgroundImg.onload = function () {  // ← Fixed: no () here
+            // Load multiple background images
+            const bgImages = [
+                new Image(),
+                new Image(),
+                new Image()
+            ];
+            bgImages[0].src = "/res/map1.png";
+            bgImages[1].src = "/res/map2.png";
+            bgImages[2].src = "/res/map3.png";
 
-    console.log("Background loaded!");
-    // Build maps
-    console.log("Building map...");
-    maps = [
-        map(context, map1, backgroundImg),
-        // map(context, map2),   // add more maps here later
-        // map(context, map3),
-    ];
-    console.log("Maps built:", maps);
+            let loadCount = 0;
+            const onBgLoad = function() {
+                loadCount++;
+                if (loadCount === bgImages.length) {
+                    console.log("All backgrounds loaded!");
+                    // Build maps
+                    console.log("Building maps...");
+                    const maps = [
+                        map(context, map1, bgImages[0]),
+                        map(context, map2, bgImages[1]),
+                        map(context, map3, bgImages[2])
+                    ];
+                    console.log("Maps built:", maps);
 
-    const selectedMap = maps[Math.floor(Math.random() * maps.length)];
-    console.log("Randomly selected map:", selectedMap);
+                    selectedMap = maps[mapIndex];
+                    console.log("Selected map by index:", selectedMap);
 
-    // Create player in the specified position
-    console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
-    player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
-    player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
-    players = [player1,player2];
-    console.log("Player created:", player1);
-    console.log("Player created:", player2);
-    if (playerNum === 1) {
-        localPlayer = player1;
-        remotePlayer = player2;
-    } else {
-        localPlayer = player2;
-        remotePlayer = player1;
-    }
-            
-    // Create monsters
-    console.log("Creating monsters...");
-    monsters = [
-        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
-        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
-    ];
-    console.log("Monsters created:", monsters);
-    
-        // Create treasuress
-    console.log("Creating treasures...");
-    treasures = [
-        treasure(context, 100, startY-160),  
-        treasure(context, 650, startY-160)    
-    ];
-    console.log("Treasures created:", treasures);
+                    // Create player in the specified position
+                    console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
+                    player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
+                    player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
+                    players = [player1,player2];
+                    console.log("Player created:", player1);
+                    console.log("Player created:", player2);
+                    if (playerNum === 1) {
+                        localPlayer = player1;
+                        remotePlayer = player2;
+                    } else {
+                        localPlayer = player2;
+                        remotePlayer = player1;
+                    }
+                            
+                    // Create monsters
+                    console.log("Creating monsters...");
+                    monsters = [
+                        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
+                        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
+                    ];
+                    console.log("Monsters created:", monsters);
+                    
+                    // Create treasures
+                    console.log("Creating treasures...");
+                    treasures = [
+                        treasure(context, 100, startY-160),  
+                        treasure(context, 650, startY-160)    
+                    ];
+                    console.log("Treasures created:", treasures);
 
-    // Create pushblocks
-    console.log("Creating pushblocks...");
-    pushblocks = [
-        pushblock(context, 256, 512, 2, 2,gameArea,selectedMap) 
-    ];
-    console.log("PushBlocks created:", pushblocks);
+                    // Create pushblocks
+                    console.log("Creating pushblocks...");
+                    pushblocks = [
+                        pushblock(context, 256, 512, 2, 2,gameArea,selectedMap) 
+                    ];
+                    console.log("PushBlocks created:", pushblocks);
 
+                    // Set up input listeners for player
+                    console.log("Setting up input listeners...");
+                    setupInputListeners(localPlayer);
+                    console.log("Input listeners set up");
+                    
+                    // Start the game loop
+                    console.log("Starting game loop...");
+                    gameLoopId = requestAnimationFrame(gameLoop);
+                    console.log("Game initialized and loop started");
+                }
+            };
 
-                // Set up input listeners for player
-            console.log("Setting up input listeners...");
-            setupInputListeners(localPlayer);
-            console.log("Input listeners set up");
-            
-            // Start the game loop
-            console.log("Starting game loop...");
-            gameLoopId = requestAnimationFrame(gameLoop);
-            console.log("Game initialized and loop started");
-};
+            bgImages.forEach(bg => bg.onload = onBgLoad);
 
-            
         } catch (error) {
             console.error("Error initializing game:", error);
             console.error("Stack trace:", error.stack);
@@ -504,9 +516,9 @@ const gameLoop = function(time) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         
         // Draw map
-        maps.forEach(map => {
-            map.draw();
-        });
+        if (selectedMap) {
+            selectedMap.draw();
+        }
 
         // Draw debug info
         context.fillStyle = 'black';
@@ -687,8 +699,9 @@ const gameLoop = function(time) {
 
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
                     treasures.splice(i, 1);
-                    collectedTreasures++;
-                    console.log("Now u have ",collectedTreasures," treasure(s)");
+                    gameState.treasuresCollected++;
+                    console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
+                    $("#treasureCount").text(`${gameState.treasuresCollected}`)
                 }
             }
         }
