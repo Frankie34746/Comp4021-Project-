@@ -8,12 +8,21 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     let hp = maxhp;
     let lastHitTime = 0;
     const HIT_COOLDOWN = 300;  // 300ms cooldown between hits
+    let knockbackEndTime = 0;
+    const KNOCKBACK_DURATION = 300; // ms
+    const KNOCKBACK_HORIZONTAL = 300; // pixels/sec
+    const KNOCKBACK_VERTICAL = -600; // pixels/sec upward
+    const FRICTION = 1000; // pixels/sec^2
 
-    const takeDamage = function(time) {
+    const takeDamage = function(time, facing) {
         if (time - lastHitTime > HIT_COOLDOWN) {
-            console.log("monster got hit!")
             hp--;
             lastHitTime = time;
+            knockbackEndTime = time + KNOCKBACK_DURATION;
+            // Knockback direction same as player's facing (push away from player)
+            const knockbackDir = (facing === 3 ? 1 : -1); // if facing 3 (right), positive (right), else negative (left)
+            velocityX = knockbackDir * KNOCKBACK_HORIZONTAL;
+            velocityY = KNOCKBACK_VERTICAL;
             return true;
         }
         return false;
@@ -48,6 +57,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     // --- Physics Variables ---
     const GRAVITY_ACCEL = 1500; // Gravity acceleration (pixels/sec^2)
     let velocityY = 0; // Current vertical velocity (pixels/sec)
+    let velocityX = 0; // Current horizontal velocity (pixels/sec)
 
     // Track previous direction to detect changes
     let prevDirection = direction;
@@ -101,50 +111,76 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     const update = function(time) {
         let { x, y } = sprite.getXY();
 
-        // Set sequence only if direction changed
-        if (direction !== prevDirection) {
-            sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight);
-            prevDirection = direction;
+        // Handle horizontal velocity
+        if (time < knockbackEndTime) {
+            // During knockback, apply friction
+            if (velocityX > 0) {
+                velocityX -= FRICTION / 60;
+                if (velocityX < 0) velocityX = 0;
+            } else if (velocityX < 0) {
+                velocityX += FRICTION / 60;
+                if (velocityX > 0) velocityX = 0;
+            }
+        } else {
+            // Normal walking
+            velocityX = (direction === 3 ? speed : -speed);
         }
 
-        /* Move the monster */
-        switch (direction) {
-            case 1: x -= speed / 60; break;
-            case 3: x += speed / 60; break;
-        }
+        // Move horizontally
+        x += velocityX / 60;
 
-        // Keep monster within bounds horizontally and reverse direction
+        // Keep monster within bounds horizontally and reverse direction if not in knockback
         if (x < gameArea.getLeft()) {
             x = gameArea.getLeft();
-            direction = 3;
+            if (time >= knockbackEndTime) direction = 3;
+            velocityX = 0;
+            if (direction !== prevDirection) {
+                sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight);
+                prevDirection = direction;
+            }
         }
         if (x > gameArea.getRight()) {
             x = gameArea.getRight();
-            direction = 1;
+            if (time >= knockbackEndTime) direction = 1;
+            velocityX = 0;
+            if (direction !== prevDirection) {
+                sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight);
+                prevDirection = direction;
+            }
         }
 
         let halfWidth = sprite_width / 2;
         let halfheight = sprite_height / 2;
-        let left = x-halfWidth/2;
-        let right = x+halfWidth/2;
-        let top = y-halfheight;
-        let bottom = y+sprite_height;
+        let left = x - halfWidth / 2;
+        let right = x + halfWidth / 2;
+        let top = y - halfheight;
+        let bottom = y + sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
         for (let i = 0; i < collisionBBs.length; i++) {
             if (currentBox.intersect(collisionBBs[i])){
                 // collision to the block when moving to the left
-                if (direction === 1) {
+                if (velocityX < 0) {
                     const offset = x - currentBox.getLeft();
                     x = collisionBBs[i].getRight() + offset + 0.01;
-                    direction = 3;
+                    if (time >= knockbackEndTime) direction = 3;
+                    velocityX = 0;
+                    if (direction !== prevDirection) {
+                        sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight);
+                        prevDirection = direction;
+                    }
                     break;
                 }
                 // collision to the block when moving to the right
-                else if (direction === 3){
+                else if (velocityX > 0){
                     const offset = currentBox.getRight() - x;
                     x = collisionBBs[i].getLeft() - offset - 0.01;
-                    direction = 1;
+                    if (time >= knockbackEndTime) direction = 1;
+                    velocityX = 0;
+                    if (direction !== prevDirection) {
+                        sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight);
+                        prevDirection = direction;
+                    }
                     break;
                 }
             };
@@ -165,10 +201,10 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             velocityY = 0;
         }
 
-        left = x-halfWidth/2;
-        right = x+halfWidth/2;
-        top = y-halfheight;
-        bottom = y+sprite_height;
+        left = x - halfWidth / 2;
+        right = x + halfWidth / 2;
+        top = y - halfheight;
+        bottom = y + sprite_height;
         currentBox = BoundingBox(ctx, top, left, bottom, right);
 
         for (let i = 0; i < collisionBBs.length; i++) {
@@ -193,6 +229,17 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         // Set position if within game area (approximate check)
         if (gameArea.isPointInBox(x, y)) {
             sprite.setXY(x, y);
+        }
+
+        // Update direction and sequence based on current velocityX
+        if (velocityX > 0 && direction !== 3) {
+            direction = 3;
+            sprite.setSequence(sequences.moveRight);
+            prevDirection = 3;
+        } else if (velocityX < 0 && direction !== 1) {
+            direction = 1;
+            sprite.setSequence(sequences.moveLeft);
+            prevDirection = 1;
         }
 
         /* Update the sprite object */
