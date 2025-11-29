@@ -29,7 +29,11 @@ const Player = function(ctx, x, y, gameArea, map) {
         moveRight: { x: 0, y: 703, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
 
         attackLeft: { x: 0, y: 3583, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
-        attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false }
+        attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
+
+        /* Fall/Death sprite sequences */
+        fallLeft: { x: 0, y: 1280, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
+        fallRight: { x: 0, y: 1343, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
     };
 
     // This is the sprite object of the player created from the Sprite module.
@@ -52,6 +56,7 @@ const Player = function(ctx, x, y, gameArea, map) {
     let velocityY = 0; // Current vertical velocity (pixels/sec)
     let isJumping = false;
     let isattacking = false;
+    let isDead = false;
 
     // Player HP
     let hp = 3;
@@ -69,7 +74,22 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // Set function for HP
     const setHP = function(newHP) {
+        const wasAlive = hp > 0;
+        const isAliveNow = newHP > 0;
         hp = newHP;
+        
+        // Trigger death animation
+        if (wasAlive && !isAliveNow) {
+            isDead = true;
+            const deathSequence = (facing === 1) ? sequences.fallLeft : sequences.fallRight;
+            sprite.setSequence(deathSequence);
+        }
+        // Revival - return to idle
+        else if (!wasAlive && isAliveNow) {
+            isDead = false;
+            const idleSequence = (facing === 1) ? sequences.idleLeft : sequences.idleRight;
+            sprite.setSequence(idleSequence);
+        }
     }
 
     // Function to hurt the player with cooldown
@@ -79,6 +99,14 @@ const Player = function(ctx, x, y, gameArea, map) {
             lastHurtTime = now;
             isInvulnerable = true;
             console.log("Player hurt! HP:", hp);
+            
+            // Trigger death animation if HP reaches 0
+            if (hp <= 0) {
+                isDead = true;
+                const deathSequence = (facing === 1) ? sequences.fallLeft : sequences.fallRight;
+                sprite.setSequence(deathSequence);
+            }
+            
             return true;  // Indicate HP changed
         }
         return false;
@@ -199,10 +227,18 @@ const Player = function(ctx, x, y, gameArea, map) {
     const update = function(time) {
         let { x, y } = sprite.getXY();
 
-        // Stop movement if HP is 0
+        // Stop movement if HP is 0 and maintain death animation
         if (hp <= 0) {
             direction = 0;
             velocityY = Math.min(velocityY, 0); // Allow falling but not jumping
+            
+            // Ensure death animation stays active
+            if (isDead) {
+                const deathSequence = (facing === 1) ? sequences.fallLeft : sequences.fallRight;
+                if (sprite.getSequence() !== deathSequence) {
+                    sprite.setSequence(deathSequence);
+                }
+            }
         }
 
         // Update the player if not attacking
