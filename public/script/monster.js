@@ -1,15 +1,23 @@
-// This function defines the Monster module.
-// - `ctx` - A canvas context for drawing
-// - `x` - The initial x position of the monster
-// - `y` - The initial y position of the monster
-// - `gameArea` - The bounding box of the game area
 const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     // Deterministic ID based on starting position
     const id = `m_${Math.floor(x)}_${Math.floor(y)}`;
 
     const sprite_height = 64;
     const sprite_width = 64;
-    
+    let maxhp = Math.floor(Math.random() * 3) + 1;
+    let hp = maxhp;
+    let lastHitTime = 0;
+    const HIT_COOLDOWN = 300;  // 300ms cooldown between hits
+
+    const takeDamage = function(time) {
+        if (time - lastHitTime > HIT_COOLDOWN) {
+            console.log("monster got hit!")
+            hp--;
+            lastHitTime = time;
+            return true;
+        }
+        return false;
+    };
     // Collision boxes of maps
     let collisionBBs = map.getBoundingBoxlist();
 
@@ -77,6 +85,16 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             return treasure(context, x, y, randomColor);
         }
     }
+
+    // Getter for current HP
+    const getHp = function() {
+        return hp;
+    };
+
+    // Getter for max HP (optional, if you need it elsewhere)
+    const getMaxHp = function() {
+        return maxhp;
+    };
 
     // This function updates the monster.
     // - `time` - The timestamp when this function is called
@@ -183,6 +201,9 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
     // The methods are returned as an object here.
     return {
+        getHp,
+        getMaxHp,
+        takeDamage,
         getBoundingBox: getBoundingBox,
         draw: sprite.draw,
         update: update,
