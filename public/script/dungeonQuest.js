@@ -846,18 +846,24 @@ const gameLoop = function(time) {
                 const monsterBB = monster.getBoundingBox();
 
                 // Player 1 collisions
-                const p1BB = player1.getBoundingBox();
-                const p1AttackBB = player1.getAttackBoundingBox();
-                if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
-                    if (monster.getwithtreasure()){
-                        treasures.push(monster.droptreasure());
-                        console.log("treasure dropped");
-                    }
-                    const socket = Socket.getSocket();
-                    socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
-                    monsters.splice(i, 1);
-                    continue;
-                }
+        const p1BB = player1.getBoundingBox();
+        const p1AttackBB = player1.getAttackBoundingBox();
+if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
+    if (monster.takeDamage(time)) {  // Uses cooldown!
+        console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
+        
+        if (monster.getHp() <= 0) {
+            if (monster.getwithtreasure()) {
+                treasures.push(monster.droptreasure());
+                console.log("Treasure dropped!");
+            }
+            const socket = Socket.getSocket();
+            socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            monsters.splice(i, 1);
+            continue;
+        }
+    }
+}
                 if (p1BB.intersect(monsterBB)) {
                     if (player1.hurt(time)) {
                         const currentHP = player1.getHP();
@@ -874,19 +880,25 @@ const gameLoop = function(time) {
                     }
                 }
 
-                // Player 2 collisions
-                const p2BB = player2.getBoundingBox();
-                const p2AttackBB = player2.getAttackBoundingBox();
-                if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
-                    if (monster.getwithtreasure()){
-                        treasures.push(monster.droptreasure())
-                        console.log("treasure dropped")
-                    }
-                    const socket = Socket.getSocket();
-                    socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
-                    monsters.splice(i, 1);
-                    continue;
-                }
+                // Player 2 collisions (same pattern)
+        const p2BB = player2.getBoundingBox();
+        const p2AttackBB = player2.getAttackBoundingBox();
+if (p1AttackBB.intersect(monsterBB) && player2.isAttacking()) {
+    if (monster.takeDamage(time)) {  // Uses cooldown!
+        console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
+        
+        if (monster.getHp() <= 0) {
+            if (monster.getwithtreasure()) {
+                treasures.push(monster.droptreasure());
+                console.log("Treasure dropped!");
+            }
+            const socket = Socket.getSocket();
+            socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            monsters.splice(i, 1);
+            continue;
+        }
+    }
+}
                 if (p2BB.intersect(monsterBB)) {
                     if (player2.hurt(time)) {
                         const currentHP = player2.getHP();
