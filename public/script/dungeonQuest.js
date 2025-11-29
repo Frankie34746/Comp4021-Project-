@@ -307,7 +307,7 @@ const showGameOver = function() {
     $("#player2DeathsLabel").text(`${ownUsername === $("#player2Name").text() ? ownUsername : partnerUsername} Deaths:`);
     $("#player1Deaths").text(gameState.playerDeaths.player1);
     $("#player2Deaths").text(gameState.playerDeaths.player2);
-    $("#finalTreasures").text(`${collectedTreasures}/${REQUIRED_TREASURES}`);
+    $("#finalTreasures").text(`${gameState.treasuresCollected}/${gameState.totalTreasures}`);
     $("#finalTime").text(timeString);
     
     // Only player 1 submits the score to avoid duplicates
@@ -413,66 +413,64 @@ const initializeGame = function() {
             console.log("Bounding box created:", gameArea);
 
             // loading background image
-const backgroundImg = new Image();
-backgroundImg.src = "/res/map1.png";
-backgroundImg.onload = function () {  // ← Fixed: no () here
+            const backgroundImg = new Image();
+            backgroundImg.src = "/res/map1.png";
+            backgroundImg.onload = function () {  // ← Fixed: no () here
 
-    console.log("Background loaded!");
-    // Build maps
-    console.log("Building map...");
-    maps = [
-        map(context, map1, backgroundImg),
-        // map(context, map2),   // add more maps here later
-        // map(context, map3),
-    ];
-    console.log("Maps built:", maps);
+                console.log("Background loaded!");
+                // Build maps
+                console.log("Building map...");
+                maps = [
+                    map(context, map1, backgroundImg),
+                    // map(context, map2),   // add more maps here later
+                    // map(context, map3),
+                ];
+                console.log("Maps built:", maps);
 
-    const selectedMap = maps[Math.floor(Math.random() * maps.length)];
-    console.log("Randomly selected map:", selectedMap);
+                const selectedMap = maps[Math.floor(Math.random() * maps.length)];
+                console.log("Randomly selected map:", selectedMap);
 
-    // Create player in the specified position
-    console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
-    player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
-    player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
-    console.log("Player created:", player1);
-    console.log("Player created:", player2);
-    if (playerNum === 1) {
-        localPlayer = player1;
-        remotePlayer = player2;
-    } else {
-        localPlayer = player2;
-        remotePlayer = player1;
-    }
-            
-    // Create monsters
-    console.log("Creating monsters...");
-    monsters = [
-        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
-        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
-    ];
-    console.log("Monsters created:", monsters);
-    
-        // Create treasuress
-    console.log("Creating treasures...");
-    treasures = [
-        treasure(context, 100, startY-160),  
-        treasure(context, 650, startY-160)    
-    ];
-    console.log("Treasures created:", treasures);
+                // Create player in the specified position
+                console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
+                player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
+                player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
+                console.log("Player created:", player1);
+                console.log("Player created:", player2);
+                if (playerNum === 1) {
+                    localPlayer = player1;
+                    remotePlayer = player2;
+                } else {
+                    localPlayer = player2;
+                    remotePlayer = player1;
+                }
+                        
+                // Create monsters
+                console.log("Creating monsters...");
+                monsters = [
+                    Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
+                    Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
+                ];
+                console.log("Monsters created:", monsters);
+                
+                    // Create treasuress
+                console.log("Creating treasures...");
+                treasures = [
+                    treasure(context, 100, startY-160),  
+                    treasure(context, 650, startY-160)    
+                ];
+                console.log("Treasures created:", treasures);
 
 
-                // Set up input listeners for player
-            console.log("Setting up input listeners...");
-            setupInputListeners(localPlayer);
-            console.log("Input listeners set up");
-            
-            // Start the game loop
-            console.log("Starting game loop...");
-            gameLoopId = requestAnimationFrame(gameLoop);
-            console.log("Game initialized and loop started");
-};
-
-            
+                            // Set up input listeners for player
+                        console.log("Setting up input listeners...");
+                        setupInputListeners(localPlayer);
+                        console.log("Input listeners set up");
+                        
+                        // Start the game loop
+                        console.log("Starting game loop...");
+                        gameLoopId = requestAnimationFrame(gameLoop);
+                        console.log("Game initialized and loop started");
+            };
         } catch (error) {
             console.error("Error initializing game:", error);
             console.error("Stack trace:", error.stack);
