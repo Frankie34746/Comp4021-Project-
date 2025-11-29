@@ -59,7 +59,8 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // Hurt cooldown
     let lastHurtTime = 0;
-    const HURT_COOLDOWN = 1000; // 1 second in ms
+    const HURT_COOLDOWN = 3000; // 3 seconds in ms
+    let isInvulnerable = false;
 
     // Get function for HP
     const getHP = function() {
@@ -76,10 +77,19 @@ const Player = function(ctx, x, y, gameArea, map) {
         if (now - lastHurtTime > HURT_COOLDOWN && hp > 0) {
             hp--;
             lastHurtTime = now;
-            console.log(hp);
+            isInvulnerable = true;
+            console.log("Player hurt! HP:", hp);
             return true;  // Indicate HP changed
         }
         return false;
+    };
+
+    // Check if player is in invulnerable state
+    const getIsInvulnerable = function(now) {
+        if (isInvulnerable && now - lastHurtTime > HURT_COOLDOWN) {
+            isInvulnerable = false;
+        }
+        return isInvulnerable;
     };
         
     // get function for isAttacking
@@ -315,6 +325,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         getHP: getHP,
         setHP,
         hurt: hurt,
+        getIsInvulnerable: getIsInvulnerable,
         getAttackBoundingBox: getAttackBoundingBox,
         getBoundingBox: getBoundingBox,
         draw: sprite.draw,

@@ -370,6 +370,24 @@ const gameLoop = function(time) {
         player1.update(time);
         player2.update(time);
 
+        // Apply flash effect for invulnerable players
+        const flashInterval = 150; // Flash every 150ms
+        const shouldFlash = Math.floor(time / flashInterval) % 2 === 0;
+        
+        context.save();
+        if (player1.getIsInvulnerable(time) && shouldFlash) {
+            context.globalAlpha = 0.3;
+        }
+        player1.draw();
+        context.restore();
+
+        context.save();
+        if (player2.getIsInvulnerable(time) && shouldFlash) {
+            context.globalAlpha = 0.3;
+        }
+        player2.draw();
+        context.restore();
+
         // Update monsters
         if (monsters) {
             monsters.forEach(monster => {
@@ -429,10 +447,6 @@ const gameLoop = function(time) {
             }
         }
                 
-        // Draw players
-        player1.draw();
-        player2.draw();
-
         // Draw monsters
         if (monsters) {
             monsters.forEach(monster => {
