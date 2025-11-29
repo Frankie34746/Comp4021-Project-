@@ -79,6 +79,10 @@ let playerNum;
 let ownUsername;
 let partnerUsername;
 
+// Useful Const and Variables (In-game)
+const REQUIRED_TREASURES = 6;       // The # of necessary treasures to open the escape portal
+let collectedTreasures = 0;         // The # of treasures collected
+
 // DEBUG MODE: Check if debug parameter is in URL
 const urlParams = new URLSearchParams(window.location.search);
 const DEBUG_MODE = urlParams.get('debug') === 'true';
@@ -262,7 +266,7 @@ const updateHPDisplay = function(playerNum, hp) {
 
 // Initialize game variables
 // Define start positions (adjust as needed for your game area)
-const player1StartX = 50;
+const player1StartX = 100;
 const player2StartX = 150;
 const startY = 704;
 
@@ -307,7 +311,7 @@ const showGameOver = function() {
     $("#player2DeathsLabel").text(`${ownUsername === $("#player2Name").text() ? ownUsername : partnerUsername} Deaths:`);
     $("#player1Deaths").text(gameState.playerDeaths.player1);
     $("#player2Deaths").text(gameState.playerDeaths.player2);
-    $("#finalTreasures").text(`${gameState.treasuresCollected}/${gameState.totalTreasures}`);
+    $("#finalTreasures").text(`${collectedTreasures}/${REQUIRED_TREASURES}`);
     $("#finalTime").text(timeString);
     
     // Only player 1 submits the score to avoid duplicates
@@ -402,7 +406,6 @@ const initializeGame = function() {
     console.log("canvas dimensions:", canvas.width, "x", canvas.height);
     
     // Set game start time
-    $("#totalTreasures").text(`${gameState.totalTreasures}`)
     gameStartTime = Date.now();
     
     if (gameState.gameActive) {
@@ -413,64 +416,73 @@ const initializeGame = function() {
             console.log("Bounding box created:", gameArea);
 
             // loading background image
-            const backgroundImg = new Image();
-            backgroundImg.src = "/res/map1.png";
-            backgroundImg.onload = function () {  // ← Fixed: no () here
+const backgroundImg = new Image();
+backgroundImg.src = "/res/map1.png";
+backgroundImg.onload = function () {  // ← Fixed: no () here
 
-                console.log("Background loaded!");
-                // Build maps
-                console.log("Building map...");
-                maps = [
-                    map(context, map1, backgroundImg),
-                    // map(context, map2),   // add more maps here later
-                    // map(context, map3),
-                ];
-                console.log("Maps built:", maps);
+    console.log("Background loaded!");
+    // Build maps
+    console.log("Building map...");
+    maps = [
+        map(context, map1, backgroundImg),
+        // map(context, map2),   // add more maps here later
+        // map(context, map3),
+    ];
+    console.log("Maps built:", maps);
 
-                const selectedMap = maps[Math.floor(Math.random() * maps.length)];
-                console.log("Randomly selected map:", selectedMap);
+    const selectedMap = maps[Math.floor(Math.random() * maps.length)];
+    console.log("Randomly selected map:", selectedMap);
 
-                // Create player in the specified position
-                console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
-                player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
-                player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
-                console.log("Player created:", player1);
-                console.log("Player created:", player2);
-                if (playerNum === 1) {
-                    localPlayer = player1;
-                    remotePlayer = player2;
-                } else {
-                    localPlayer = player2;
-                    remotePlayer = player1;
-                }
-                        
-                // Create monsters
-                console.log("Creating monsters...");
-                monsters = [
-                    Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
-                    Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
-                ];
-                console.log("Monsters created:", monsters);
-                
-                    // Create treasuress
-                console.log("Creating treasures...");
-                treasures = [
-                    treasure(context, 100, startY-160),  
-                    treasure(context, 650, startY-160)    
-                ];
-                console.log("Treasures created:", treasures);
+    // Create player in the specified position
+    console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
+    player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
+    player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
+    console.log("Player created:", player1);
+    console.log("Player created:", player2);
+    if (playerNum === 1) {
+        localPlayer = player1;
+        remotePlayer = player2;
+    } else {
+        localPlayer = player2;
+        remotePlayer = player1;
+    }
+            
+    // Create monsters
+    console.log("Creating monsters...");
+    monsters = [
+        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
+        Monster(context, 650, startY, gameArea, selectedMap,true)    // Right patrol
+    ];
+    console.log("Monsters created:", monsters);
+    
+        // Create treasuress
+    console.log("Creating treasures...");
+    treasures = [
+        treasure(context, 100, startY-160),  
+        treasure(context, 650, startY-160)    
+    ];
+    console.log("Treasures created:", treasures);
+
+    // Create pushblocks
+    console.log("Creating pushblocks...");
+    pushblocks = [
+        pushblock(context, 256, 512, 2, 2,gameArea,selectedMap) 
+    ];
+    console.log("PushBlocks created:", pushblocks);
 
 
-                            // Set up input listeners for player
-                        console.log("Setting up input listeners...");
-                        setupInputListeners(localPlayer);
-                        console.log("Input listeners set up");
-                        
-                        // Start the game loop
-                        console.log("Starting game loop...");
-                        gameLoopId = requestAnimationFrame(gameLoop);
-                        console.log("Game initialized and loop started");
-            };
+                // Set up input listeners for player
+            console.log("Setting up input listeners...");
+            setupInputListeners(localPlayer);
+            console.log("Input listeners set up");
+            
+            // Start the game loop
+            console.log("Starting game loop...");
+            gameLoopId = requestAnimationFrame(gameLoop);
+            console.log("Game initialized and loop started");
+};
+
+            
         } catch (error) {
             console.error("Error initializing game:", error);
             console.error("Stack trace:", error.stack);
@@ -490,6 +502,11 @@ const gameLoop = function(time) {
         // Clear the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
         
+        // Draw map
+        maps.forEach(map => {
+            map.draw();
+        });
+
         // Draw debug info
         context.fillStyle = 'black';
         context.font = '20px Arial';
@@ -498,6 +515,7 @@ const gameLoop = function(time) {
         // Update players
         player1.update(time);
         player2.update(time);
+
 
         // Apply flash effect for invulnerable players
         const flashInterval = 150; // Flash every 150ms
@@ -527,6 +545,13 @@ const gameLoop = function(time) {
         if (treasures) {
             treasures.forEach(treasure => {
                 treasure.update(time);
+            });
+        }
+
+        // Update pushblocks
+        if (pushblocks) {
+            pushblocks.forEach(pushblock => {
+                pushblock.update(time, gameArea, pushblocks);
             });
         }
         
@@ -661,9 +686,8 @@ const gameLoop = function(time) {
 
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
                     treasures.splice(i, 1);
-                    gameState.treasuresCollected++
-                    console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
-                    $("#treasureCount").text(`${gameState.treasuresCollected}`)
+                    collectedTreasures++;
+                    console.log("Now u have ",collectedTreasures," treasure(s)");
                 }
             }
         }
@@ -681,11 +705,14 @@ const gameLoop = function(time) {
                 treasure.draw();
             });
         }
-        
-        // Draw map
-        maps.forEach(map => {
-            map.draw();
-        });
+
+        // Update pushblocks
+        if (pushblocks) {
+            pushblocks.forEach(pushblock => {
+                pushblock.draw();
+            });
+        }
+    
     
         
     } catch (error) {
