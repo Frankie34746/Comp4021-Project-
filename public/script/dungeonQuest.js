@@ -137,6 +137,8 @@ $("#register-form").on("submit", (e) => {
                 gameState.gameActive = true;
                 gameState.username = username;
                 gameState.currentScreen = 'gamePage';
+                window.playerNum = playerNum;
+                window.gameState = gameState;
                 
                 console.log("Scheduling initializeGame after 100ms");
                 // Initialize game immediately with random mapIndex
@@ -193,6 +195,8 @@ $("#register-form").on("submit", (e) => {
                     gameState.gameActive = true;
                     gameState.username = username;
                     gameState.currentScreen = 'gamePage';
+                    window.playerNum = playerNum;
+                    window.gameState = gameState;
 
                     initializeGame(data.mapIndex, data.spawnData);
 
@@ -220,6 +224,11 @@ $("#register-form").on("submit", (e) => {
                     });
 
                     socket.on("updateHP", (data) => {
+                        // Don't update HP if the local player has cheat mode enabled
+                        if (gameState.cheatMode && data.playerNum === playerNum) {
+                            return;
+                        }
+                        
                         if (data.playerNum === 1) {
                             player1.setHP(data.hp);
                             updateHPDisplay(1, data.hp);
@@ -639,6 +648,10 @@ const initializeGame = function(mapIndex, spawnData = null) {
                     console.log("Setting up input listeners...");
                     setupInputListeners(localPlayer);
                     console.log("Input listeners set up");
+                    
+                    // Make gameState and players globally accessible for cheat mode
+                    window.gameState = gameState;
+                    window.player = localPlayer;
                     
                     // Start the game loop
                     console.log("Starting game loop...");

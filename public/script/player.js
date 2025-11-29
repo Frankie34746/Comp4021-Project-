@@ -66,6 +66,7 @@ const Player = function(ctx, x, y, gameArea, map) {
     let lastHurtTime = 0;
     const HURT_COOLDOWN = 3000; // 3 seconds in ms
     let isInvulnerable = false;
+    let cheatModeEnabled = false;
 
     // Get function for HP
     const getHP = function() {
@@ -94,6 +95,11 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // Function to hurt the player with cooldown
     const hurt = function(now) {
+        // If cheat mode is enabled, don't take damage
+        if (cheatModeEnabled) {
+            return false;
+        }
+        
         if (now - lastHurtTime > HURT_COOLDOWN && hp > 0) {
             hp--;
             lastHurtTime = now;
@@ -449,6 +455,16 @@ const Player = function(ctx, x, y, gameArea, map) {
         sprite.update(time);
     };
 
+    // Function to enable/disable cheat mode
+    const setCheatMode = function(enabled) {
+        cheatModeEnabled = enabled;
+        if (enabled) {
+            console.log("Player invincibility ENABLED");
+        } else {
+            console.log("Player invincibility DISABLED");
+        }
+    };
+
     // The methods are returned as an object here.
     return {
         move: move,
@@ -464,6 +480,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         getIsInvulnerable: getIsInvulnerable,
         getAttackBoundingBox: getAttackBoundingBox,
         getBoundingBox: getBoundingBox,
+        setCheatMode: setCheatMode,
         draw: sprite.draw,
         update: update,
         getXY: sprite.getXY,

@@ -21,6 +21,35 @@ function setupInputListeners(player) {
         // This is a common pattern to prevent default browser actions (like scrolling)
         // when arrow keys or spacebar are pressed.
 
+        // Check for C key to toggle cheat mode
+        const C = 67;
+        if (event.keyCode === C) {
+            // Toggle cheat mode in game state
+            if (typeof gameState !== 'undefined') {
+                gameState.cheatMode = !gameState.cheatMode;
+                
+                // Update player-info background color for the correct player
+                const playerNumber = typeof window.playerNum !== 'undefined' ? window.playerNum : 1;
+                const playerInfoId = playerNumber === 1 ? 'player1Info' : 'player2Info';
+                const playerInfo = document.getElementById(playerInfoId);
+                if (playerInfo) {
+                    if (gameState.cheatMode) {
+                        playerInfo.classList.add('cheat-active');
+                    } else {
+                        playerInfo.classList.remove('cheat-active');
+                    }
+                }
+                
+                // Update player invincibility
+                if (typeof player.setCheatMode === 'function') {
+                    player.setCheatMode(gameState.cheatMode);
+                }
+                
+                console.log('Cheat mode:', gameState.cheatMode ? 'ENABLED' : 'DISABLED', 'for Player', playerNumber);
+            }
+            return;
+        }
+
         // Don't allow any actions if player is dead
         if (player.getHP() <= 0) return;
 
