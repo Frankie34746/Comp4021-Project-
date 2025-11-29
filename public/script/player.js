@@ -128,6 +128,7 @@ const Player = function(ctx, x, y, gameArea, map) {
     // This function sets the player's moving direction.
     // - `dir` - the moving direction (1: Left, 2: Up, 3: Right, 4: Down)
     const move = function(dir) {
+        if (hp <= 0) return; // Cannot move when dead
         if (dir >= 1 && dir <= 4 && dir != direction ) {
             switch (dir) {
                 case 1: sprite.setSequence(sequences.moveLeft); break;
@@ -158,6 +159,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // This function initiates the player's jump.
     const jump = function() {
+        if (hp <= 0) return; // Cannot jump when dead
         if (!isJumping){
             velocityY = -JUMP_STRENGTH;
             isJumping = true;
@@ -166,6 +168,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // This function initiates the player's Attack
     const attack = function() {
+        if (hp <= 0) return; // Cannot attack when dead
         if (!isattacking && !isJumping){
             isattacking = true;
             setTimeout(() => {
@@ -181,11 +184,13 @@ const Player = function(ctx, x, y, gameArea, map) {
 
     // This function speeds up the player.
     const speedUp = function() {
+        if (hp <= 0) return; // Cannot speed up when dead
         speed = 250;
     };
 
     // This function slows down the player.
     const slowDown = function() {
+        if (hp <= 0) return; // Cannot slow down when dead
         speed = 150;
     };
 
@@ -193,6 +198,12 @@ const Player = function(ctx, x, y, gameArea, map) {
     // - `time` - The timestamp when this function is called
     const update = function(time) {
         let { x, y } = sprite.getXY();
+
+        // Stop movement if HP is 0
+        if (hp <= 0) {
+            direction = 0;
+            velocityY = Math.min(velocityY, 0); // Allow falling but not jumping
+        }
 
         // Update the player if not attacking
         if (!isattacking) {

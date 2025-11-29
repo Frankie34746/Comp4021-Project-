@@ -21,6 +21,9 @@ function setupInputListeners(player) {
         // This is a common pattern to prevent default browser actions (like scrolling)
         // when arrow keys or spacebar are pressed.
 
+        // Don't allow any actions if player is dead
+        if (player.getHP() <= 0) return;
+
         if (!player.isAttacking()) {
             switch (event.keyCode) {
                 case A:
@@ -77,6 +80,9 @@ function setupInputListeners(player) {
     });
 
     $(document).on("keyup", function(event) {
+        // Don't allow any actions if player is dead
+        if (player.getHP() <= 0) return;
+
         if (!player.isAttacking()) {
             switch (event.keyCode) {
                 case A:
