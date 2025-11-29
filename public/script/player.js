@@ -31,7 +31,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         attackLeft: { x: 0, y: 3583, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
         attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
 
-        /* Fall/Death sprite sequences */
+        /* Fall/ Death sprite sequences */
         fallLeft: { x: 0, y: 1280, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
         fallRight: { x: 0, y: 1343, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
     };
@@ -144,8 +144,8 @@ const Player = function(ctx, x, y, gameArea, map) {
     const getBoundingBox = function() {
         let { x, y } = sprite.getXY();
 
-        let left = x-halfWidth;
-        let right = x+halfWidth;
+        let left = x-halfWidth / 2;
+        let right = x+halfWidth / 2;
         let top = y-halfheight;
         let bottom = y+sprite_height;
 
@@ -259,12 +259,13 @@ const Player = function(ctx, x, y, gameArea, map) {
                 x = gameArea.getRight();
             }
 
-            let left = x-halfWidth;
-            let right = x+halfWidth;
+            let left = x-halfWidth / 2;
+            let right = x+halfWidth / 2;
             let top = y-halfheight;
             let bottom = y+sprite_height;
             let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
+            // 1. Check map collision
             for (let i = 0; i < collisionBBs.length; i++) {
                 if (currentBox.intersect(collisionBBs[i])){
                     // collision to the block when moving to the left
@@ -279,16 +280,34 @@ const Player = function(ctx, x, y, gameArea, map) {
                         x = collisionBBs[i].getLeft() - offset - 0.01;
                         break;
                     }
-                };
-            };
-                        // 2. Check pushblock collision and try to push
+                }
+            }
+
+            // 2. Check other players horizontal collision (collide without pushing)
+            for (let other of players) {
+                if (other !== this) {
+                    const otherBox = other.getBoundingBox();
+                    if (currentBox.intersect(otherBox)) {
+                        if (direction === 1) {
+                            const offset = x - currentBox.getLeft();
+                            x = otherBox.getRight() + offset + 0.01;
+                        } else if (direction === 3) {
+                            const offset = currentBox.getRight() - x;
+                            x = otherBox.getLeft() - offset - 0.01;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // 3. Check pushblock collision and try to push
             for (let block of pushblocks) {
                 const blockBox = block.getBoundingBox();
-                    if (currentBox.intersect(blockBox)) {
+                if (currentBox.intersect(blockBox)) {
                     // Only try to push if player is moving into the block
                     if (direction === 1 || direction === 3) {
                         const pushSuccess = block.tryPush(direction, speed / 60, pushblocks);
-                            if (!pushSuccess) {
+                        if (!pushSuccess) {
                             // Cannot push → stop player
                             if (direction === 1) {
                                 const offset = x - currentBox.getLeft();
@@ -299,10 +318,10 @@ const Player = function(ctx, x, y, gameArea, map) {
                             }
                         }
                         // If push succeeded, player keeps moving → no break needed
+                    }
+                    break;
                 }
-                break;
             }
-        }
         }
 
         // Vertical Physics (Gravity and Jump) - applies whether attacking or not
@@ -321,12 +340,13 @@ const Player = function(ctx, x, y, gameArea, map) {
             velocityY = 0;
         }
 
-        let left = x-halfWidth;
-        let right = x+halfWidth;
+        let left = x-halfWidth / 2;
+        let right = x+halfWidth / 2;
         let top = y-halfheight;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
+        // Map vertical collision
         for (let i = 0; i < collisionBBs.length; i++) {
             if (currentBox.intersect(collisionBBs[i])){
                 // collision to the block when jumping up
@@ -344,9 +364,30 @@ const Player = function(ctx, x, y, gameArea, map) {
                     y = collisionBBs[i].getTop() - offset - 0.01;
                     break;
                 }
-            };
-        };
-                // Pushblock vertical collision (player can stand on them)
+            }
+        }
+
+        // Other players vertical collision (can stand on them)
+        for (let other of players) {
+            if (other !== this) {
+                const otherBox = other.getBoundingBox();
+                if (currentBox.intersect(otherBox)) {
+                    if (velocityY < 0) {
+                        velocityY = 0;
+                        const offset = y - currentBox.getTop();
+                        y = otherBox.getBottom() + offset + 0.01;
+                    } else if (velocityY >= 0) {
+                        velocityY = 0;
+                        isJumping = false;
+                        const offset = currentBox.getBottom() - y;
+                        y = otherBox.getTop() - offset - 0.01;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Pushblock vertical collision (player can stand on them)
         for (let block of pushblocks) {
             const blockBox = block.getBoundingBox();
             if (currentBox.intersect(blockBox)) {
@@ -367,19 +408,28 @@ const Player = function(ctx, x, y, gameArea, map) {
         // === GROUND DETECTION (allow jumping only when on ground) ===
         let onGround = false;
 
-        left = x-halfWidth+10;
-        right = x+halfWidth-10;
+        left = x - halfWidth/2 + 10;
+        right = x + halfWidth/2 - 10;
         top = y;
-        bottom = y+sprite_height+1;
-        groundCheckBox = BoundingBox(ctx, top, left, bottom, right);
+        bottom = y + sprite_height + 1;
+        const groundCheckBox = BoundingBox(ctx, top, left, bottom, right);
 
         for (let i = 0; i < collisionBBs.length; i++) {
-            if (currentBox.intersect(collisionBBs[i])){
-                // collision to the block when jumping up
+            if (groundCheckBox.intersect(collisionBBs[i])){
                 onGround = true;
                 break;
-            };
-        };
+            }
+        }
+
+        for (let other of players) {
+            if (other !== this) {
+                if (groundCheckBox.intersect(other.getBoundingBox())) {
+                    onGround = true;
+                    break;
+                }
+            }
+        }
+
         for (let block of pushblocks) {
             if (groundCheckBox.intersect(block.getBoundingBox())) {
                 onGround = true;
