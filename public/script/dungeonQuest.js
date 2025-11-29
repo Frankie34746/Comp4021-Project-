@@ -883,7 +883,7 @@ if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
                 // Player 2 collisions (same pattern)
         const p2BB = player2.getBoundingBox();
         const p2AttackBB = player2.getAttackBoundingBox();
-if (p1AttackBB.intersect(monsterBB) && player2.isAttacking()) {
+if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
     if (monster.takeDamage(time,player2.getfacing())) {  // Uses cooldown!
         console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
         
