@@ -55,8 +55,8 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         let halfWidth = sprite_width / 2;
         let halfheight = sprite_height / 2;
 
-        let left = x-halfWidth;
-        let right = x+halfWidth;
+        let left = x-halfWidth/2;
+        let right = x+halfWidth/2;
         let top = y-halfheight;
         let bottom = y+sprite_height;
 
@@ -104,8 +104,8 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
         let halfWidth = sprite_width / 2;
         let halfheight = sprite_height / 2;
-        let left = x-halfWidth;
-        let right = x+halfWidth;
+        let left = x-halfWidth/2;
+        let right = x+halfWidth/2;
         let top = y-halfheight;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
@@ -144,8 +144,8 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             velocityY = 0;
         }
 
-        left = x-halfWidth;
-        right = x+halfWidth;
+        left = x-halfWidth/2;
+        right = x+halfWidth/2;
         top = y-halfheight;
         bottom = y+sprite_height;
         currentBox = BoundingBox(ctx, top, left, bottom, right);
