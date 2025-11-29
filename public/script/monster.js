@@ -231,15 +231,17 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             sprite.setXY(x, y);
         }
 
-        // Update direction and sequence based on current velocityX
-        if (velocityX > 0 && direction !== 3) {
-            direction = 3;
-            sprite.setSequence(sequences.moveRight);
-            prevDirection = 3;
-        } else if (velocityX < 0 && direction !== 1) {
-            direction = 1;
-            sprite.setSequence(sequences.moveLeft);
-            prevDirection = 1;
+        // Update direction and sequence based on current velocityX only when not in knockback
+        if (time >= knockbackEndTime) {
+            if (velocityX > 0 && direction !== 3) {
+                direction = 3;
+                sprite.setSequence(sequences.moveRight);
+                prevDirection = 3;
+            } else if (velocityX < 0 && direction !== 1) {
+                direction = 1;
+                sprite.setSequence(sequences.moveLeft);
+                prevDirection = 1;
+            }
         }
 
         /* Update the sprite object */
