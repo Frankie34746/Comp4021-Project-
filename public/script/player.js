@@ -320,6 +320,7 @@ const Player = function(ctx, x, y, gameArea, map) {
             }
         }
 
+        let previousY = y;
         // Vertical Physics (Gravity and Jump) - applies whether attacking or not
         velocityY += GRAVITY_ACCEL / 60;
         y += velocityY / 60;
@@ -337,6 +338,8 @@ const Player = function(ctx, x, y, gameArea, map) {
         let top = y-halfheight;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
+
+        let previousBottom = previousY + sprite_height;
 
         // Map vertical collision
         for (let i = 0; i < collisionBBs.length; i++) {
@@ -363,13 +366,11 @@ const Player = function(ctx, x, y, gameArea, map) {
         for (let other of players) {
             if (other !== this) {
                 const otherBox = other.getBoundingBox();
-                if (currentBox.intersect(otherBox)) {
-                    if (velocityY > 0) {
-                        velocityY = 0;
-                        isJumping = false;
-                        const offset = currentBox.getBottom() - y;
-                        y = otherBox.getTop() - offset - 0.01;
-                    }
+                if (currentBox.intersect(otherBox) && velocityY >= 0 && previousBottom <= otherBox.getTop()) {
+                    velocityY = 0;
+                    isJumping = false;
+                    const offset = currentBox.getBottom() - y;
+                    y = otherBox.getTop() - offset - 0.01;
                     break;
                 }
             }
