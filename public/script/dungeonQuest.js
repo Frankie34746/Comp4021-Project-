@@ -629,7 +629,12 @@ const initializeGame = function(mapIndex, spawnData = null) {
                         pushblock(context, 256, 512, 2, 2,gameArea,selectedMap) 
                     ];
                     console.log("PushBlocks created:", pushblocks);
-
+                    
+                    // Create portal
+                    console.log("Creating portal...");
+                    Portal = portal(context, 256, 512) 
+                    console.log("portal created:", Portal);
+                    
                     // Set up input listeners for player
                     console.log("Setting up input listeners...");
                     setupInputListeners(localPlayer);
@@ -717,6 +722,9 @@ const gameLoop = function(time) {
             selectedMap.draw();
         }
 
+        // Draw portal
+        Portal.draw();
+        
         // Draw debug info
         context.fillStyle = 'black';
         context.font = '20px Arial';
@@ -764,6 +772,9 @@ const gameLoop = function(time) {
                 pushblock.update(time, gameArea, pushblocks);
             });
         }
+        
+        // Update portal
+        Portal.update(time);
         
         // Collision detection
         if (monsters && player1 && player2) {
