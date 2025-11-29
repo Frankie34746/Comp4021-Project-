@@ -446,6 +446,42 @@ const gameLoop = function(time) {
                 }
             }
         }
+
+        // Player-to-player collision for revive
+        if (player1 && player2) {
+            const p1BB = player1.getBoundingBox();
+            const p2BB = player2.getBoundingBox();
+            const p1HP = player1.getHP();
+            const p2HP = player2.getHP();
+
+            // Check if players are touching
+            if (p1BB.intersect(p2BB)) {
+                // If player1 is dead (HP = 0) and player2 is alive, revive player1
+                if (p1HP <= 0 && p2HP > 0) {
+                    player1.setHP(3);
+                    updateHPDisplay(1, 3);
+                    const socket = Socket.getSocket();
+                    socket.emit("updateHP", { 
+                        roomId: window.roomId, 
+                        playerNum: 1, 
+                        hp: 3
+                    });
+                    console.log("Player 1 revived by Player 2!");
+                }
+                // If player2 is dead (HP = 0) and player1 is alive, revive player2
+                else if (p2HP <= 0 && p1HP > 0) {
+                    player2.setHP(3);
+                    updateHPDisplay(2, 3);
+                    const socket = Socket.getSocket();
+                    socket.emit("updateHP", { 
+                        roomId: window.roomId, 
+                        playerNum: 2, 
+                        hp: 3
+                    });
+                    console.log("Player 2 revived by Player 1!");
+                }
+            }
+        }
                 
         // Draw monsters
         if (monsters) {
