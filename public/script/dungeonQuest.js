@@ -275,6 +275,10 @@ let monsters = null;
 let gameArea = null;
 let gameLoopId = null;
 
+// Revive tracking
+let lastReviveTime = { player1: 0, player2: 0 };
+const REVIVE_COOLDOWN = 5000; // 5 seconds cooldown after revival
+
 // Initialize the game
 const initializeGame = function() {
     console.log("Initializing game...");
@@ -457,7 +461,7 @@ const gameLoop = function(time) {
             // Check if players are touching
             if (p1BB.intersect(p2BB)) {
                 // If player1 is dead (HP = 0) and player2 is alive, revive player1
-                if (p1HP <= 0 && p2HP > 0) {
+                if (p1HP <= 0 && p2HP > 0 && (time - lastReviveTime.player1 > REVIVE_COOLDOWN)) {
                     player1.setHP(3);
                     updateHPDisplay(1, 3);
                     const socket = Socket.getSocket();
@@ -466,10 +470,11 @@ const gameLoop = function(time) {
                         playerNum: 1, 
                         hp: 3
                     });
+                    lastReviveTime.player1 = time;
                     console.log("Player 1 revived by Player 2!");
                 }
                 // If player2 is dead (HP = 0) and player1 is alive, revive player2
-                else if (p2HP <= 0 && p1HP > 0) {
+                else if (p2HP <= 0 && p1HP > 0 && (time - lastReviveTime.player2 > REVIVE_COOLDOWN)) {
                     player2.setHP(3);
                     updateHPDisplay(2, 3);
                     const socket = Socket.getSocket();
@@ -478,6 +483,7 @@ const gameLoop = function(time) {
                         playerNum: 2, 
                         hp: 3
                     });
+                    lastReviveTime.player2 = time;
                     console.log("Player 2 revived by Player 1!");
                 }
             }
