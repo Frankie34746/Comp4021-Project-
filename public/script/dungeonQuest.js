@@ -301,8 +301,8 @@ backgroundImg.onload = function () {  // ← Fixed: no () here
     // Create monsters
     console.log("Creating monsters...");
     monsters = [
-        Monster(context, 100, startY, gameArea),   // Left patrol
-        Monster(context, 650, startY, gameArea)    // Right patrol
+        Monster(context, 100, startY, gameArea, selectedMap),   // Left patrol
+        Monster(context, 650, startY, gameArea, selectedMap)    // Right patrol
     ];
     console.log("Monsters created:", monsters);
 
