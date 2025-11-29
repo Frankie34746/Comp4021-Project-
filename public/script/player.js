@@ -18,6 +18,10 @@ const Player = function(ctx, x, y, gameArea, map) {
     // Collision boxes of maps
     let collisionBBs = map.getBoundingBoxlist();
 
+    const getfacing = function(){
+        return facing
+    }
+
     // This is the sprite sequences of the player facing different directions.
     const sequences = {
         /* Idling sprite sequences for facing different directions */
@@ -485,6 +489,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         draw: sprite.draw,
         update: update,
         getXY: sprite.getXY,
-        setXY: sprite.setXY
+        setXY: sprite.setXY,
+        getfacing: getfacing
     };
 };
