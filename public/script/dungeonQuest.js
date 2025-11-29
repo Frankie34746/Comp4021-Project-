@@ -219,7 +219,13 @@ $("#register-form").on("submit", (e) => {
                     });
 
                     socket.on("updateHP", (data) => {
-                        // To be implemented
+                        if (data.playerNum === 1) {
+                            player1.setHP(data.hp);
+                            updateHPDisplay(1, data.hp);
+                        } else if (data.playerNum === 2) {
+                            player2.setHP(data.hp);
+                            updateHPDisplay(2, data.hp);
+                        }
                     });
                 });
             }
@@ -233,6 +239,24 @@ $("#gamePage").hide();
 $("#gameOverPage").hide();
 
 // ===================== GAME LOOP =====================
+
+// Function to update HP display
+const updateHPDisplay = function(playerNum, hp) {
+    const maxHP = 3;
+    const hpPercentage = (hp / maxHP) * 100;
+    
+    $(`#player${playerNum}HP`).text(hp);
+    $(`#player${playerNum}Health`).css('width', hpPercentage + '%');
+    
+    // Optional: Add visual feedback for low HP
+    if (hp <= 1) {
+        $(`#player${playerNum}Health`).css('background-color', '#e74c3c');
+    } else if (hp <= 2) {
+        $(`#player${playerNum}Health`).css('background-color', '#f39c12');
+    } else {
+        $(`#player${playerNum}Health`).css('background-color', '#2ecc71');
+    }
+};
 
 // Initialize game variables
 // Define start positions (adjust as needed for your game area)
@@ -370,11 +394,13 @@ const gameLoop = function(time) {
                 }
                 if (p1BB.intersect(monsterBB)) {
                     if (player1.hurt(time)) {
+                        const currentHP = player1.getHP();
+                        updateHPDisplay(1, currentHP);
                         const socket = Socket.getSocket();
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
                             playerNum: 1, 
-                            hp: player1.getHP() 
+                            hp: currentHP
                         });
                     }
                 }
@@ -390,11 +416,13 @@ const gameLoop = function(time) {
                 }
                 if (p2BB.intersect(monsterBB)) {
                     if (player2.hurt(time)) {
+                        const currentHP = player2.getHP();
+                        updateHPDisplay(2, currentHP);
                         const socket = Socket.getSocket();
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
                             playerNum: 2, 
-                            hp: player2.getHP() 
+                            hp: currentHP
                         });
                     }
                 }
