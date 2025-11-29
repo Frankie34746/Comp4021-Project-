@@ -647,6 +647,22 @@ const gameLoop = function(time) {
             }
         }
                 
+        // Collect treasures
+        if (treasures && player1 && player2) {
+            for (let i = treasures.length - 1; i >= 0; i--) {
+                const treasure = treasures[i];
+                const treasureBB = treasure.getBoundingBox();
+
+                const p1BB = player1.getBoundingBox();
+                const p2BB = player2.getBoundingBox();
+
+                if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
+                    treasures.splice(i, 1);
+                    collectedTreasures++;
+                }
+            }
+        }
+
         // Draw monsters
         if (monsters) {
             monsters.forEach(monster => {
