@@ -227,6 +227,12 @@ $("#register-form").on("submit", (e) => {
                             updateHPDisplay(2, data.hp);
                         }
                     });
+
+                    socket.on("gameOver", (data) => {
+                        if (gameState.gameActive) {
+                            showGameOver();
+                        }
+                    });
                 });
             }
         }
@@ -278,6 +284,37 @@ let gameLoopId = null;
 // Revive tracking
 let lastReviveTime = { player1: 0, player2: 0 };
 const REVIVE_COOLDOWN = 5000; // 5 seconds cooldown after revival
+
+// Function to show game over screen
+const showGameOver = function() {
+    console.log("Game Over - Both players defeated!");
+    
+    // Stop the game loop
+    gameState.gameActive = false;
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+        gameLoopId = null;
+    }
+    
+    // Play game over sound
+    sounds.gameover.play();
+    
+    // Update game over page
+    $("#player1DeathsLabel").text(`${ownUsername === $("#player1Name").text() ? ownUsername : partnerUsername} Deaths:`);
+    $("#player2DeathsLabel").text(`${ownUsername === $("#player2Name").text() ? ownUsername : partnerUsername} Deaths:`);
+    $("#player1Deaths").text(gameState.playerDeaths.player1);
+    $("#player2Deaths").text(gameState.playerDeaths.player2);
+    $("#finalTreasures").text(`${collectedTreasures}/${REQUIRED_TREASURES}`);
+    
+    // Show game over page
+    $("#gamePage").hide();
+    $("#gameOverPage").show();
+    
+    // Set up play again button
+    $("#playAgainBtn").off("click").on("click", () => {
+        location.reload();
+    });
+};
 
 // Initialize the game
 const initializeGame = function() {
@@ -418,6 +455,9 @@ const gameLoop = function(time) {
                     if (player1.hurt(time)) {
                         const currentHP = player1.getHP();
                         updateHPDisplay(1, currentHP);
+                        if (currentHP <= 0) {
+                            gameState.playerDeaths.player1++;
+                        }
                         const socket = Socket.getSocket();
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
@@ -440,6 +480,9 @@ const gameLoop = function(time) {
                     if (player2.hurt(time)) {
                         const currentHP = player2.getHP();
                         updateHPDisplay(2, currentHP);
+                        if (currentHP <= 0) {
+                            gameState.playerDeaths.player2++;
+                        }
                         const socket = Socket.getSocket();
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
@@ -448,6 +491,22 @@ const gameLoop = function(time) {
                         });
                     }
                 }
+            }
+        }
+
+        // Check if both players are dead - Game Over
+        if (player1 && player2) {
+            const p1HP = player1.getHP();
+            const p2HP = player2.getHP();
+
+            if (p1HP <= 0 && p2HP <= 0 && gameState.gameActive) {
+                // Both players are dead - trigger game over
+                const socket = Socket.getSocket();
+                if (socket && window.roomId) {
+                    socket.emit("gameOver", { roomId: window.roomId });
+                }
+                showGameOver();
+                return; // Stop processing this frame
             }
         }
 

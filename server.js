@@ -87,6 +87,10 @@ io.on("connection", (socket) => {
     socket.on("updateHP", (data) => {
         socket.to(data.roomId).emit("updateHP", data);
     });
+
+    socket.on("gameOver", (data) => {
+        io.to(data.roomId).emit("gameOver", data);
+    });
 });
 
 httpServer.listen(8000, () => {
