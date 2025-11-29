@@ -1,4 +1,4 @@
-const map = function(ctx, collisions) {
+const map = function(ctx, collisions, background) {
     
     let CollisionBlocks = [];
     const tileSize = 32;
@@ -14,6 +14,14 @@ const map = function(ctx, collisions) {
     }
 
     const draw = function (){
+        if (background && background.complete && background.naturalWidth > 0) {
+            ctx.drawImage(
+                background,
+                0, 0,                    // top-left corner on canvas
+                mapWidth * tileSize,     // width of the map in pixels
+                Math.ceil(collisions.length / mapWidth) * tileSize  // height of the map
+            );
+        }
         CollisionBlocks.forEach(block => block.draw());
     }
 
