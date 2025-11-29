@@ -79,10 +79,6 @@ let playerNum;
 let ownUsername;
 let partnerUsername;
 
-// Useful Const and Variables (In-game)
-const REQUIRED_TREASURES = 6;       // The # of necessary treasures to open the escape portal
-let collectedTreasures = 0;         // The # of treasures collected
-
 // DEBUG MODE: Check if debug parameter is in URL
 const urlParams = new URLSearchParams(window.location.search);
 const DEBUG_MODE = urlParams.get('debug') === 'true';
@@ -313,7 +309,7 @@ const showGameOver = function() {
     $("#player2DeathsLabel").text(`${ownUsername === $("#player2Name").text() ? ownUsername : partnerUsername} Deaths:`);
     $("#player1Deaths").text(gameState.playerDeaths.player1);
     $("#player2Deaths").text(gameState.playerDeaths.player2);
-    $("#finalTreasures").text(`${collectedTreasures}/${REQUIRED_TREASURES}`);
+    $("#finalTreasures").text(`${gameState.treasuresCollected}/${gameState.totalTreasures}`);
     $("#finalTime").text(timeString);
     
     // Only player 1 submits the score to avoid duplicates
