@@ -280,6 +280,7 @@ let monsters = null;
 
 let gameArea = null;
 let gameLoopId = null;
+let gameStartTime = null; // Track when game starts
 
 // Revive tracking
 let lastReviveTime = { player1: 0, player2: 0 };
@@ -299,12 +300,27 @@ const showGameOver = function() {
     // Play game over sound
     sounds.gameover.play();
     
+    // Calculate time taken
+    const timeElapsed = Date.now() - gameStartTime;
+    const minutes = Math.floor(timeElapsed / 60000);
+    const seconds = Math.floor((timeElapsed % 60000) / 1000);
+    const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
     // Update game over page
     $("#player1DeathsLabel").text(`${ownUsername === $("#player1Name").text() ? ownUsername : partnerUsername} Deaths:`);
     $("#player2DeathsLabel").text(`${ownUsername === $("#player2Name").text() ? ownUsername : partnerUsername} Deaths:`);
     $("#player1Deaths").text(gameState.playerDeaths.player1);
     $("#player2Deaths").text(gameState.playerDeaths.player2);
     $("#finalTreasures").text(`${collectedTreasures}/${REQUIRED_TREASURES}`);
+    $("#finalTime").text(timeString);
+    
+    // Only player 1 submits the score to avoid duplicates
+    if (playerNum === 1) {
+        submitScoreAndGetLeaderboard(ownUsername, partnerUsername, timeString);
+    } else {
+        // Player 2 just fetches the leaderboard
+        fetchLeaderboard();
+    }
     
     // Show game over page
     $("#gamePage").hide();
@@ -316,6 +332,71 @@ const showGameOver = function() {
     });
 };
 
+// Function to submit score and get leaderboard in one request
+const submitScoreAndGetLeaderboard = function(username, partner, timeTaken) {
+    $.ajax({
+        url: '/submitScore',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            username: username,
+            partner: partner,
+            timeTaken: timeTaken
+        }),
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                displayLeaderboard(response.leaderboard);
+            } else {
+                $("#rankingList").html('<li>Failed to save score</li>');
+                console.error('Submit score error:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            $("#rankingList").html('<li>Failed to save score</li>');
+            console.error('Submit score error:', error);
+        }
+    });
+};
+
+// Function to fetch and display leaderboard (fallback)
+const fetchLeaderboard = function() {
+    $.ajax({
+        url: '/getLeaderboard',
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                displayLeaderboard(response.leaderboard);
+            } else {
+                $("#rankingList").html('<li>Failed to load leaderboard</li>');
+            }
+        },
+        error: function() {
+            $("#rankingList").html('<li>Failed to load leaderboard</li>');
+        }
+    });
+};
+
+// Function to display leaderboard
+const displayLeaderboard = function(leaderboard) {
+    const $rankingList = $("#rankingList");
+    $rankingList.empty();
+    
+    if (leaderboard.length === 0) {
+        $rankingList.html('<li>No records yet. Be the first!</li>');
+        return;
+    }
+    
+    leaderboard.forEach((entry, index) => {
+        const className = index === 0 ? 'top-rank' : '';
+        const $li = $('<li></li>')
+            .addClass(className)
+            .text(`${entry.username} & ${entry.partner} - ${entry.timeTaken}`);
+        $rankingList.append($li);
+    });
+};
+
 // Initialize the game
 const initializeGame = function() {
     console.log("Initializing game...");
@@ -323,6 +404,9 @@ const initializeGame = function() {
     console.log("canvas:", canvas);
     console.log("context:", context);
     console.log("canvas dimensions:", canvas.width, "x", canvas.height);
+    
+    // Set game start time
+    gameStartTime = Date.now();
     
     if (gameState.gameActive) {
         try {
