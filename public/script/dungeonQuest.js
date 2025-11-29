@@ -454,6 +454,15 @@ backgroundImg.onload = function () {  // ← Fixed: no () here
         Monster(context, 650, startY, gameArea, selectedMap)    // Right patrol
     ];
     console.log("Monsters created:", monsters);
+    
+        // Create treasuress
+    console.log("Creating treasures...");
+    treasures = [
+        treasure(context, 100, startY-160, gameArea),  
+        treasure(context, 650, startY-160, gameArea)    
+    ];
+    console.log("Treasures created:", treasures);
+
 
                 // Set up input listeners for player
             console.log("Setting up input listeners...");
@@ -517,6 +526,12 @@ const gameLoop = function(time) {
         if (monsters) {
             monsters.forEach(monster => {
                 monster.update(time);
+            });
+        }
+        // Update treasures
+        if (treasures) {
+            treasures.forEach(treasure => {
+                treasure.update(time);
             });
         }
         
@@ -636,6 +651,13 @@ const gameLoop = function(time) {
         if (monsters) {
             monsters.forEach(monster => {
                 monster.draw();
+            });
+        }
+                
+        // Draw treasures
+        if (treasures) {
+            treasures.forEach(treasure => {
+                treasure.draw();
             });
         }
         
