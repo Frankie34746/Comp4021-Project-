@@ -437,6 +437,7 @@ backgroundImg.onload = function () {  // ← Fixed: no () here
     console.log("Creating player1 and player2 at position (100, 240) and (700, 240) respectively...");
     player1 = Player(context, player1StartX, startY, gameArea, selectedMap);
     player2 = Player(context, player2StartX, startY, gameArea, selectedMap);
+    players = [player1,player2];
     console.log("Player created:", player1);
     console.log("Player created:", player2);
     if (playerNum === 1) {
