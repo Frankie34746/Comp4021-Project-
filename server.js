@@ -147,10 +147,11 @@ io.on("connection", (socket) => {
     });
 
     // Handle the start game request (only from host/player1)
-    socket.on("startGame", (roomId) => {
+    socket.on("startGame", (data) => {
         const room = Array.from(socket.rooms).find(r => r !== socket.id);
-        if (room === roomId) {
-            io.to(room).emit("gameStart");
+        if (room === data.roomId) {
+            const mapIndex = data.mapIndex
+            io.to(room).emit("gameStart", { mapIndex } );
         }
     });
 
