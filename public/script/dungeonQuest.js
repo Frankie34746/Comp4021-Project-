@@ -911,11 +911,6 @@ const gameLoop = function(time) {
             Portal.draw();
         }
         
-        // Draw debug info
-        context.fillStyle = 'black';
-        context.font = '20px Arial';
-        context.fillText('DEBUG: Frame ' + frameCount, 20, 40);
-        
         // Update players
         player1.update(time);
         player2.update(time);
