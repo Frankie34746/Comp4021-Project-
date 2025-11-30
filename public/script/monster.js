@@ -92,8 +92,11 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             // Random color for dropped treasure
             const colors = ["green", "red", "yellow", "purple"];
             const randomColor = colors[Math.floor(Math.random() * 4)];
-            return treasure(ctx, x, y, randomColor);
+            const droppedTreasure = treasure(ctx, x, y, randomColor);
+            // Return both treasure object and its color for syncing
+            return { treasure: droppedTreasure, color: randomColor };
         }
+        return null;
     }
 
     // Getter for current HP

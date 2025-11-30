@@ -566,23 +566,15 @@ const generateSpawnPositions = function(mapIndex) {
             return false;
         }
         
-        // Check collision with map tiles (expanded check area for safety)
-        const checkRadius = 64; // Check 64 pixels around the spawn point
-        for (let dx = -checkRadius; dx <= checkRadius; dx += tileSize) {
-            for (let dy = -checkRadius; dy <= checkRadius; dy += tileSize) {
-                const checkX = x + dx;
-                const checkY = y + dy;
-                
-                // Calculate tile index
-                const tileCol = Math.floor(checkX / tileSize);
-                const tileRow = Math.floor(checkY / tileSize);
-                const tileIndex = tileRow * mapWidth + tileCol;
-                
-                // Check if this tile is a collision tile (non-zero value)
-                if (tileIndex >= 0 && tileIndex < collisions.length && collisions[tileIndex] !== 0) {
-                    return false;
-                }
-            }
+        // Check collision with map tiles - only check the center point, not the expanded area
+        // This is more lenient and works better for maps with different collision tile IDs
+        const centerTileCol = Math.floor(x / tileSize);
+        const centerTileRow = Math.floor(y / tileSize);
+        const centerTileIndex = centerTileRow * mapWidth + centerTileCol;
+        
+        // Check if center position is on a collision tile (non-zero value)
+        if (centerTileIndex >= 0 && centerTileIndex < collisions.length && collisions[centerTileIndex] !== 0) {
+            return false;
         }
         
         return true;
@@ -604,7 +596,7 @@ const generateSpawnPositions = function(mapIndex) {
         }
         
         // Fallback to safe positions if random generation fails
-        console.warn("Could not find valid random position, using fallback");
+        console.warn(`Could not find valid random position for map ${mapIndex} after ${maxAttempts} attempts, using fallback`);
         return { x: 400 + Math.random() * 480, y: 300 };
     };
     
