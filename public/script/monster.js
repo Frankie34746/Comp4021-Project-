@@ -34,8 +34,8 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     // Assuming similar layout to player for simplicity; adjust as needed for actual spritesheet.
     const sequences = {
         /* Moving sprite sequences for facing different directions */
-        moveLeft:  { x: 0, y: 576, width: 64, height: 64, count: 8, timing: 50, loop: true },
-        moveRight: { x: 0, y: 703, width: 64, height: 64, count: 8, timing: 50, loop: true },
+        moveLeft:  { x: 0, y: sprite_height * 9, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveRight: { x: 0, y: sprite_height * 11, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
     };
 
     // This is the sprite object of the monster created from the Sprite module.
@@ -49,7 +49,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
     sprite.setSequence(direction === 1 ? sequences.moveLeft : sequences.moveRight)
           .setScale(2)
           .setShadowScale({ x: 0.75, y: 0.20 })
-          .useSheet("res/character-spritesheet.png");
+          .useSheet("res/monster-spritesheet.png");
 
     // Speed
     let speed = 50; // Speed for walking (pixels per second)
@@ -75,7 +75,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
         let left = x-halfWidth/2;
         let right = x+halfWidth/2;
-        let top = y-halfheight + 5;
+        let top = y-halfheight;
         let bottom = y+sprite_height;
 
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
@@ -153,7 +153,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         let halfheight = sprite_height / 2;
         let left = x - halfWidth / 2;
         let right = x + halfWidth / 2;
-        let top = y - halfheight + 5;
+        let top = y - halfheight;
         let bottom = y + sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -203,7 +203,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
         left = x - halfWidth / 2;
         right = x + halfWidth / 2;
-        top = y - halfheight + 5;
+        top = y - halfheight;
         bottom = y + sprite_height;
         currentBox = BoundingBox(ctx, top, left, bottom, right);
 
