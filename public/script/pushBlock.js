@@ -11,6 +11,10 @@ const pushblock = function(ctx, x, y, width, height, gameArea, map) {
     const blockWidth = width * TILE_SIZE - 1;
     const blockHeight = height * TILE_SIZE - 1;
     
+    // Load the image for the pushblock
+    const img = new Image();
+    img.src = '/res/pushblock.png';
+    
     // Physics variables
     let posX = x;
     let posY = y;
@@ -115,15 +119,15 @@ const pushblock = function(ctx, x, y, width, height, gameArea, map) {
             }
         }
         
-// Inside tryPush, replace the players loop with:
-if (players && Array.isArray(players)) {
-    for (let player of players) {
-        const playerBox = player.getBoundingBox();
-        if (testBox.intersect(playerBox)) {
-            return false; // Blocked by player
+        // Inside tryPush, replace the players loop with:
+        if (players && Array.isArray(players)) {
+            for (let player of players) {
+                const playerBox = player.getBoundingBox();
+                if (testBox.intersect(playerBox)) {
+                    return false; // Blocked by player
+                }
+            }
         }
-    }
-}
         
         // Check game area
         if (nextX < gameArea.getLeft() || nextX + blockWidth > gameArea.getRight()) {
@@ -135,20 +139,11 @@ if (players && Array.isArray(players)) {
         return true;
     };
     
-    // Draw the pushblock (simple gray rectangle for now)
+    // Draw the pushblock using the image (stretched to fit if multi-tile)
     const draw = function() {
-        ctx.fillStyle = '#8B4513'; // Brown/wood color
-        ctx.fillRect(posX, posY, blockWidth, blockHeight);
-        
-        // Optional: Outline for visibility
-        ctx.strokeStyle = '#654321';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(posX, posY, blockWidth, blockHeight);
-        
-        // Optional: Debug bounding box
-        // const bb = getBoundingBox();
-        // ctx.strokeStyle = 'red';
-        // ctx.strokeRect(bb.getLeft(), bb.getTop(), bb.getWidth(), bb.getHeight());
+        if (img.complete) {
+            ctx.drawImage(img, posX, posY, blockWidth, blockHeight);
+        }
     };
     
     return {
