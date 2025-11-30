@@ -22,7 +22,7 @@ const map = function(ctx, collisions, background) {
                 Math.ceil(collisions.length / mapWidth) * tileSize  // height of the map
             );
         }
-        CollisionBlocks.forEach(block => block.draw());
+        //CollisionBlocks.forEach(block => block.draw());
     }
 
     const getBoundingBoxlist = function(){
