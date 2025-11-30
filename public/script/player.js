@@ -25,19 +25,19 @@ const Player = function(ctx, x, y, gameArea, map) {
     // This is the sprite sequences of the player facing different directions.
     const sequences = {
         /* Idling sprite sequences for facing different directions */
-        idleLeft:  { x: 0, y: 1471, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
-        idleRight: { x: 0, y: 1599, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
+        idleLeft:  { x: 0, y: sprite_height, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
+        idleRight: { x: 0, y: sprite_height * 3, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
 
         /* Moving sprite sequences for facing different directions */
-        moveLeft:  { x: 0, y: 576, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
-        moveRight: { x: 0, y: 703, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveLeft:  { x: 0, y: sprite_height * 9, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveRight: { x: 0, y: sprite_height * 11, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
 
-        attackLeft: { x: 0, y: 3583, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
-        attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
+        attackLeft: { x: 0, y: sprite_height * 57, width: 64 * 3, height: 64 * 3, count: attackcount, timing: attackframe, loop: false },
+        attackRight: { x: 0, y: sprite_height * 63, width: 64 * 3, height: 64 * 3, count: attackcount, timing: attackframe, loop: false },
 
         /* Fall/ Death sprite sequences */
-        fallLeft: { x: 0, y: 1280, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
-        fallRight: { x: 0, y: 1343, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
+        fallLeft: { x: 0, y: sprite_height * 20, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
+        fallRight: { x: 0, y: sprite_height * 20, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
     };
 
     // This is the sprite object of the player created from the Sprite module.
@@ -47,7 +47,7 @@ const Player = function(ctx, x, y, gameArea, map) {
     sprite.setSequence(sequences.idleLeft)
           .setScale(2)
           .setShadowScale({ x: 0.75, y: 0.20 })
-          .useSheet("res/character-spritesheet.png");
+          .useSheet("res/player-spritesheet.png");
 
     // This is the moving direction: 0=not moving, 1=Left, 2=Up (unused for physics), 3=Right, 4=Down (unused for physics)
     let direction = 0;
@@ -339,7 +339,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
         let left = x-halfWidth / 2;
         let right = x+halfWidth / 2;
-        let top = y-halfheight + 5;
+        let top = y-halfheight + 2;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -493,3 +493,4 @@ const Player = function(ctx, x, y, gameArea, map) {
         getfacing: getfacing
     };
 };
+
