@@ -315,32 +315,33 @@ const Player = function(ctx, x, y, gameArea, map) {
                 }
             }
 
-            // 3. Check pushblock collision and try to push
-            for (let block of pushblocks) {
-                const blockBox = block.getBoundingBox();
-                if (currentBox.intersect(blockBox)) {
-                    // Only try to push if player is moving into the block
-                    if (direction === 1 || direction === 3) {
-                        const pushSuccess = block.tryPush(direction, speed / 60, pushblocks);
-                        if (!pushSuccess) {
-                            // Cannot push → stop player at the edge of block
-                            if (direction === 1) {
-                                const offset = x - currentBox.getLeft();
-                                x = blockBox.getRight() + offset + 0.01;
-                            } else if (direction === 3) {
-                                const offset = currentBox.getRight() - x;
-                                x = blockBox.getLeft() - offset - 0.01;
-                            }
-                            break;
-                        } else {
-                            // Push succeeded - keep player at same relative position
-                            // Don't let player climb on top while pushing
-                            isPushingBlock = true;
-                        }
-                    }
-                    break;
+// 3. Check pushblock collision and try to push
+for (let block of pushblocks) {
+    const blockBox = block.getBoundingBox();
+    if (currentBox.intersect(blockBox)) {
+        // Only try to push if player is moving into the block
+        if (direction === 1 || direction === 3) {
+            // PASS 'players' as the 4th argument HERE
+            const pushSuccess = block.tryPush(direction, speed / 60, pushblocks, players);
+            if (!pushSuccess) {
+                // Cannot push → stop player at the edge of block
+                if (direction === 1) {
+                    const offset = x - currentBox.getLeft();
+                    x = blockBox.getRight() + offset + 0.01;
+                } else if (direction === 3) {
+                    const offset = currentBox.getRight() - x;
+                    x = blockBox.getLeft() - offset - 0.01;
                 }
+                break;
+            } else {
+                // Push succeeded - keep player at same relative position
+                // Don't let player climb on top while pushing
+                isPushingBlock = true;
             }
+        }
+        break;
+    }
+}
         }
 
         let previousY = y;
