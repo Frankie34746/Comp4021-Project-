@@ -224,8 +224,8 @@ $("#register-form").on("submit", (e) => {
                     });
 
                     socket.on("updateHP", (data) => {
-                        // Don't update HP if the local player has cheat mode enabled
-                        if (gameState.cheatMode && data.playerNum === playerNum) {
+                        // Don't update HP if cheat mode is enabled on the sender's side
+                        if (data.cheatMode) {
                             return;
                         }
                         
@@ -235,6 +235,28 @@ $("#register-form").on("submit", (e) => {
                         } else if (data.playerNum === 2) {
                             player2.setHP(data.hp);
                             updateHPDisplay(2, data.hp);
+                        }
+                    });
+
+                    socket.on("cheatModeToggle", (data) => {
+                        console.log(`Player ${data.playerNum} cheat mode: ${data.cheatMode ? 'ENABLED' : 'DISABLED'}`);
+                        
+                        // Update the visual indicator for the other player
+                        const playerInfoId = data.playerNum === 1 ? 'player1Info' : 'player2Info';
+                        const playerInfo = document.getElementById(playerInfoId);
+                        if (playerInfo) {
+                            if (data.cheatMode) {
+                                playerInfo.classList.add('cheat-active');
+                            } else {
+                                playerInfo.classList.remove('cheat-active');
+                            }
+                        }
+                        
+                        // Update the player object's cheat mode on the receiving client
+                        const targetPlayer = data.playerNum === 1 ? player1 : player2;
+                        if (targetPlayer && typeof targetPlayer.setCheatMode === 'function') {
+                            targetPlayer.setCheatMode(data.cheatMode);
+                            console.log(`Updated Player ${data.playerNum} cheat mode to ${data.cheatMode} on remote client`);
                         }
                     });
 
@@ -318,11 +340,23 @@ $("#register-form").on("submit", (e) => {
 
                     // Listen for treasure drops from monsters
                     socket.on("dropTreasure", (data) => {
-                        if (treasures && context) {
-                            const droppedTreasure = treasure(context, data.x, data.y, data.color || "green");
-                            treasures.push(droppedTreasure);
-                            console.log("Received dropped treasure at:", data.x, data.y, "color:", data.color);
+                        console.log("dropTreasure event received:", data);
+                        if (!context) {
+                            console.error("Context not available for dropped treasure");
+                            return;
                         }
+                        if (!treasures) {
+                            console.error("Treasures array not initialized yet, cannot add dropped treasure");
+                            return;
+                        }
+                        if (!data.color) {
+                            console.error("Treasure color not provided in dropTreasure event");
+                            return;
+                        }
+                        
+                        const droppedTreasure = treasure(context, data.x, data.y, data.color);
+                        treasures.push(droppedTreasure);
+                        console.log("Successfully added dropped treasure at:", data.x, data.y, "color:", data.color, "Total treasures:", treasures.length);
                     });
 
                     // Listen for pushblock position sync (Player 2 receives from Player 1)
@@ -382,6 +416,9 @@ let remainingmapindex = [0,1,2]
 let isTransitioning = false;
 
 let monsters = null;
+let treasures = null;
+let pushblocks = null;
+let Portal = null;
 
 let gameArea = null;
 let gameLoopId = null;
@@ -948,22 +985,26 @@ if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
         if (monster.getHp() <= 0) {
             const socket = Socket.getSocket();
             if (monster.getwithtreasure()) {
-                const droppedTreasure = monster.droptreasure();
-                treasures.push(droppedTreasure);
-                const treasurePos = droppedTreasure.getXY();
-                console.log("Treasure dropped at:", treasurePos);
-                
-                // Sync dropped treasure to other player
-                if (!DEBUG_MODE && socket && window.roomId) {
-                    socket.emit("dropTreasure", { 
-                        roomId: window.roomId, 
-                        x: treasurePos.x, 
-                        y: treasurePos.y,
-                        color: "green"
-                    });
+                const dropResult = monster.droptreasure();
+                if (dropResult) {
+                    treasures.push(dropResult.treasure);
+                    const treasurePos = dropResult.treasure.getXY();
+                    console.log("Treasure dropped at:", treasurePos, "color:", dropResult.color);
+                    
+                    // Sync dropped treasure to other player with correct color
+                    if (!DEBUG_MODE && socket && window.roomId) {
+                        socket.emit("dropTreasure", { 
+                            roomId: window.roomId, 
+                            x: treasurePos.x, 
+                            y: treasurePos.y,
+                            color: dropResult.color
+                        });
+                    }
                 }
             }
-            socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            if (!DEBUG_MODE && socket && window.roomId) {
+                socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            }
             monsters.splice(i, 1);
             continue;
         }
@@ -980,7 +1021,8 @@ if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
                             playerNum: 1, 
-                            hp: currentHP
+                            hp: currentHP,
+                            cheatMode: gameState.cheatMode || false
                         });
                     }
                 }
@@ -993,24 +1035,34 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
         console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
         
         if (monster.getHp() <= 0) {
+            console.log(`Monster ${monster.getId()} killed by Player 2. Had treasure: ${monster.getwithtreasure()}`);
             const socket = Socket.getSocket();
             if (monster.getwithtreasure()) {
-                const droppedTreasure = monster.droptreasure();
-                treasures.push(droppedTreasure);
-                const treasurePos = droppedTreasure.getXY();
-                console.log("Treasure dropped at:", treasurePos);
-                
-                // Sync dropped treasure to other player
-                if (!DEBUG_MODE && socket && window.roomId) {
-                    socket.emit("dropTreasure", { 
-                        roomId: window.roomId, 
-                        x: treasurePos.x, 
-                        y: treasurePos.y,
-                        color: "green"
-                    });
+                const dropResult = monster.droptreasure();
+                if (dropResult) {
+                    treasures.push(dropResult.treasure);
+                    const treasurePos = dropResult.treasure.getXY();
+                    console.log("[P2] Treasure dropped locally at:", treasurePos, "color:", dropResult.color);
+                    
+                    // Sync dropped treasure to other player with correct color
+                    if (!DEBUG_MODE && socket && window.roomId) {
+                        console.log("[P2] Emitting dropTreasure to other player:", { x: treasurePos.x, y: treasurePos.y, color: dropResult.color });
+                        socket.emit("dropTreasure", { 
+                            roomId: window.roomId, 
+                            x: treasurePos.x, 
+                            y: treasurePos.y,
+                            color: dropResult.color
+                        });
+                    } else {
+                        console.log("[P2] Not emitting (DEBUG_MODE or no socket):", { DEBUG_MODE, hasSocket: !!socket, hasRoomId: !!window.roomId });
+                    }
+                } else {
+                    console.warn("[P2] dropResult is null!");
                 }
             }
-            socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            if (!DEBUG_MODE && socket && window.roomId) {
+                socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
+            }
             monsters.splice(i, 1);
             continue;
         }
@@ -1027,7 +1079,8 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                         socket.emit("updateHP", { 
                             roomId: window.roomId, 
                             playerNum: 2, 
-                            hp: currentHP
+                            hp: currentHP,
+                            cheatMode: gameState.cheatMode || false
                         });
                     }
                 }
@@ -1067,7 +1120,8 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                     socket.emit("updateHP", { 
                         roomId: window.roomId, 
                         playerNum: 1, 
-                        hp: 3
+                        hp: 3,
+                        cheatMode: false
                     });
                     lastReviveTime.player1 = time;
                     console.log("Player 1 revived by Player 2!");
@@ -1080,7 +1134,8 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                     socket.emit("updateHP", { 
                         roomId: window.roomId, 
                         playerNum: 2, 
-                        hp: 3
+                        hp: 3,
+                        cheatMode: false
                     });
                     lastReviveTime.player2 = time;
                     console.log("Player 2 revived by Player 1!");

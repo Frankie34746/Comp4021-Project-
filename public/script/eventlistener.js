@@ -45,6 +45,15 @@ function setupInputListeners(player) {
                     player.setCheatMode(gameState.cheatMode);
                 }
                 
+                // Sync cheat mode status to other player
+                if (socket && window.roomId) {
+                    socket.emit("cheatModeToggle", { 
+                        roomId: window.roomId, 
+                        playerNum: playerNumber,
+                        cheatMode: gameState.cheatMode
+                    });
+                }
+                
                 console.log('Cheat mode:', gameState.cheatMode ? 'ENABLED' : 'DISABLED', 'for Player', playerNumber);
             }
             return;

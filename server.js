@@ -176,6 +176,11 @@ io.on("connection", (socket) => {
         socket.to(data.roomId).emit("dropTreasure", data);
     });
 
+    // Handle cheat mode toggle sync
+    socket.on("cheatModeToggle", (data) => {
+        socket.to(data.roomId).emit("cheatModeToggle", data);
+    });
+
     // Handle pushblock position sync
     socket.on("syncPushblocks", (data) => {
         socket.to(data.roomId).emit("syncPushblocks", data);

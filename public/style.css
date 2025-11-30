@@ -220,12 +220,16 @@ input:focus {
     margin: 0 3px;
 }
 
-.player1-info.cheat-active {
+.player-info.player1-info.cheat-active {
     background: rgba(255, 0, 0, 0.6) !important;
+    border-color: #ff0000 !important;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.8) !important;
 }
 
-.player2-info.cheat-active {
+.player-info.player2-info.cheat-active {
     background: rgba(0, 100, 255, 0.6) !important;
+    border-color: #0064ff !important;
+    box-shadow: 0 0 15px rgba(0, 100, 255, 0.8) !important;
 }
 
 .lobby {
