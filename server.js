@@ -171,6 +171,11 @@ io.on("connection", (socket) => {
         socket.to(data.roomId).emit("collectTreasure", data);
     });
 
+    // Handle treasure drops from monsters
+    socket.on("dropTreasure", (data) => {
+        socket.to(data.roomId).emit("dropTreasure", data);
+    });
+
     // Handle pushblock position sync
     socket.on("syncPushblocks", (data) => {
         socket.to(data.roomId).emit("syncPushblocks", data);

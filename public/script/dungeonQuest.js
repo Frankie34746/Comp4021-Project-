@@ -316,6 +316,15 @@ $("#register-form").on("submit", (e) => {
                         console.log("Remote player collected treasure. Total:", gameState.treasuresCollected);
                     });
 
+                    // Listen for treasure drops from monsters
+                    socket.on("dropTreasure", (data) => {
+                        if (treasures && context) {
+                            const droppedTreasure = treasure(context, data.x, data.y, data.color || "green");
+                            treasures.push(droppedTreasure);
+                            console.log("Received dropped treasure at:", data.x, data.y, "color:", data.color);
+                        }
+                    });
+
                     // Listen for pushblock position sync (Player 2 receives from Player 1)
                     socket.on("syncPushblocks", (data) => {
                         if (playerNum === 2 && pushblocks && data.pushblocks) {
@@ -937,11 +946,23 @@ if (p1AttackBB.intersect(monsterBB) && player1.isAttacking()) {
         console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
         
         if (monster.getHp() <= 0) {
-            if (monster.getwithtreasure()) {
-                treasures.push(monster.droptreasure());
-                console.log("Treasure dropped!");
-            }
             const socket = Socket.getSocket();
+            if (monster.getwithtreasure()) {
+                const droppedTreasure = monster.droptreasure();
+                treasures.push(droppedTreasure);
+                const treasurePos = droppedTreasure.getXY();
+                console.log("Treasure dropped at:", treasurePos);
+                
+                // Sync dropped treasure to other player
+                if (!DEBUG_MODE && socket && window.roomId) {
+                    socket.emit("dropTreasure", { 
+                        roomId: window.roomId, 
+                        x: treasurePos.x, 
+                        y: treasurePos.y,
+                        color: "green"
+                    });
+                }
+            }
             socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
             monsters.splice(i, 1);
             continue;
@@ -972,11 +993,23 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
         console.log(`Monster ${monster.getId()} hit! HP: ${monster.getHp()}`);
         
         if (monster.getHp() <= 0) {
-            if (monster.getwithtreasure()) {
-                treasures.push(monster.droptreasure());
-                console.log("Treasure dropped!");
-            }
             const socket = Socket.getSocket();
+            if (monster.getwithtreasure()) {
+                const droppedTreasure = monster.droptreasure();
+                treasures.push(droppedTreasure);
+                const treasurePos = droppedTreasure.getXY();
+                console.log("Treasure dropped at:", treasurePos);
+                
+                // Sync dropped treasure to other player
+                if (!DEBUG_MODE && socket && window.roomId) {
+                    socket.emit("dropTreasure", { 
+                        roomId: window.roomId, 
+                        x: treasurePos.x, 
+                        y: treasurePos.y,
+                        color: "green"
+                    });
+                }
+            }
             socket.emit("killMonster", { roomId: window.roomId, monsterId: monster.getId() });
             monsters.splice(i, 1);
             continue;

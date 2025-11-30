@@ -92,7 +92,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
             // Random color for dropped treasure
             const colors = ["green", "red", "yellow", "purple"];
             const randomColor = colors[Math.floor(Math.random() * 4)];
-            return treasure(context, x, y, randomColor);
+            return treasure(ctx, x, y, randomColor);
         }
     }
 
