@@ -777,6 +777,9 @@ const gameLoop = function(time) {
         console.log("Frame:", frameCount, "Time:", time);
     }
     
+    // Play background music
+    sounds.background.play();
+
     try {
         // Periodic synchronization (Player 1 sends updates to Player 2)
         if (!DEBUG_MODE && playerNum === 1 && time - lastSyncTime > SYNC_INTERVAL) {
@@ -1031,6 +1034,7 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                 if (p1BB.intersect(treasureBB) || p2BB.intersect(treasureBB)) {
                     const treasurePos = treasure.getXY();
                     treasures.splice(i, 1);
+                    sounds.collect.play();
                     gameState.treasuresCollected++;
                     console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
                     $("#treasureCount").text(`${gameState.treasuresCollected}`);
@@ -1105,8 +1109,7 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                 pushblock.draw();
             });
         }
-    
-    
+
         
     } catch (error) {
         console.error("Error in game loop:", error);
