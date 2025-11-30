@@ -25,19 +25,19 @@ const Player = function(ctx, x, y, gameArea, map) {
     // This is the sprite sequences of the player facing different directions.
     const sequences = {
         /* Idling sprite sequences for facing different directions */
-        idleLeft:  { x: 0, y: sprite_height, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
-        idleRight: { x: 0, y: sprite_height * 3, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
+        idleLeft:  { x: 0, y: 1471, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
+        idleRight: { x: 0, y: 1599, width: sprite_width, height: sprite_height, count: 2, timing: 500, loop: true },
 
         /* Moving sprite sequences for facing different directions */
-        moveLeft:  { x: 0, y: sprite_height * 9, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
-        moveRight: { x: 0, y: sprite_height * 11, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveLeft:  { x: 0, y: 576, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
+        moveRight: { x: 0, y: 703, width: sprite_width, height: sprite_height, count: 8, timing: 50, loop: true },
 
-        attackLeft: { x: 0, y: sprite_height * 57, width: 64 * 3, height: 64 * 3, count: attackcount, timing: attackframe, loop: false },
-        attackRight: { x: 0, y: sprite_height * 63, width: 64 * 3, height: 64 * 3, count: attackcount, timing: attackframe, loop: false },
+        attackLeft: { x: 0, y: 3583, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
+        attackRight: { x: 0, y: 3839, width: 128, height: 128, count: attackcount, timing: attackframe, loop: false },
 
         /* Fall/ Death sprite sequences */
-        fallLeft: { x: 0, y: sprite_height * 20, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
-        fallRight: { x: 0, y: sprite_height * 20, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
+        fallLeft: { x: 0, y: 1280, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false },
+        fallRight: { x: 0, y: 1343, width: sprite_width, height: sprite_height, count: 6, timing: 100, loop: false }
     };
 
     // This is the sprite object of the player created from the Sprite module.
@@ -47,7 +47,7 @@ const Player = function(ctx, x, y, gameArea, map) {
     sprite.setSequence(sequences.idleLeft)
           .setScale(2)
           .setShadowScale({ x: 0.75, y: 0.20 })
-          .useSheet("res/player-spritesheet.png");
+          .useSheet("res/character-spritesheet.png");
 
     // This is the moving direction: 0=not moving, 1=Left, 2=Up (unused for physics), 3=Right, 4=Down (unused for physics)
     let direction = 0;
@@ -71,6 +71,12 @@ const Player = function(ctx, x, y, gameArea, map) {
     const HURT_COOLDOWN = 3000; // 3 seconds in ms
     let isInvulnerable = false;
     let cheatModeEnabled = false;
+
+    // Riding logic for pushblocks and other players
+    let standingOnBlock = null;
+    let lastBlockX = null;
+    let standingOnPlayer = null;
+    let lastPlayerX = null;
 
     // Get function for HP
     const getHP = function() {
@@ -177,8 +183,6 @@ const Player = function(ctx, x, y, gameArea, map) {
         }
     };
 
-    // This function stops the player from moving horizontally.
-    // - `dir` - the moving direction when the player is stopped (1: Left, 3: Right)
     // This function stops the player from moving.
     // - `dir` - the moving direction when the player is stopped (1: Left, 2: Up, 3: Right, 4: Down)
     const stop = function(dir) {
@@ -236,6 +240,21 @@ const Player = function(ctx, x, y, gameArea, map) {
     // - `time` - The timestamp when this function is called
     const update = function(time) {
         let { x, y } = sprite.getXY();
+
+        // Apply riding logic if standing on a moving block or player
+        if (standingOnBlock !== null) {
+            const blockBox = standingOnBlock.getBoundingBox();
+            const currentBlockX = (blockBox.getLeft() + blockBox.getRight()) / 2;
+            const deltaX = currentBlockX - lastBlockX;
+            x += deltaX;
+            lastBlockX = currentBlockX;
+        }
+        if (standingOnPlayer !== null) {
+            const currentPlayerX = standingOnPlayer.getXY().x;
+            const deltaX = currentPlayerX - lastPlayerX;
+            x += deltaX;
+            lastPlayerX = currentPlayerX;
+        }
 
         // Track if player is pushing a block (used later for collision logic)
         let isPushingBlock = false;
@@ -339,7 +358,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
         let left = x-halfWidth / 2;
         let right = x+halfWidth / 2;
-        let top = y-halfheight + 2;
+        let top = y-halfheight + 5;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -367,6 +386,7 @@ const Player = function(ctx, x, y, gameArea, map) {
         }
 
         // Other players vertical collision (can stand on them)
+        let foundStandingPlayer = false;
         for (let other of players) {
             if (other !== this) {
                 const otherBox = other.getBoundingBox();
@@ -375,13 +395,21 @@ const Player = function(ctx, x, y, gameArea, map) {
                     isJumping = false;
                     const offset = currentBox.getBottom() - y;
                     y = otherBox.getTop() - offset - 0.01;
+                    standingOnPlayer = other;
+                    lastPlayerX = other.getXY().x;
+                    foundStandingPlayer = true;
                     break;
                 }
             }
         }
+        if (!foundStandingPlayer) {
+            standingOnPlayer = null;
+            lastPlayerX = null;
+        }
 
         // Pushblock vertical collision (player can stand on them)
         // But don't apply vertical collision if player is actively pushing horizontally
+        let foundStandingBlock = false;
         if (!isPushingBlock) {
             for (let block of pushblocks) {
                 const blockBox = block.getBoundingBox();
@@ -390,15 +418,23 @@ const Player = function(ctx, x, y, gameArea, map) {
                         velocityY = 0;
                         const offset = y - currentBox.getTop();
                         y = blockBox.getBottom() + offset + 0.01;
-                    } else if (velocityY >= 0) {
+                    } else if (velocityY >= 0 && previousBottom <= blockBox.getTop()) {
                         velocityY = 0;
                         isJumping = false;
                         const offset = currentBox.getBottom() - y;
                         y = blockBox.getTop() - offset - 0.01;
+                        standingOnBlock = block;
+                        const currentBlockX = (blockBox.getLeft() + blockBox.getRight()) / 2;
+                        lastBlockX = currentBlockX;
+                        foundStandingBlock = true;
                     }
                     break;
                 }
             }
+        }
+        if (!foundStandingBlock) {
+            standingOnBlock = null;
+            lastBlockX = null;
         }
 
         // Keep player within bounds vertically
@@ -493,4 +529,3 @@ const Player = function(ctx, x, y, gameArea, map) {
         getfacing: getfacing
     };
 };
-
