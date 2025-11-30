@@ -673,9 +673,9 @@ const initializeGame = function(mapIndex, spawnData = null) {
                     
                     if (mapIndex === 0) {
                         // Map 1: Multiple blocks for easier stair climbing
-                        // Floor is at y=704, blocks are 64px tall (2x2 tiles), so they spawn at y=640
+                        // Floor is at y=704, blocks are 64px tall (2x2 tiles)
                         pushblocks = [
-                            pushblock(context, 320, 640, 2, 2, gameArea, selectedMap),  // Block 1 - on the floor
+                            pushblock(context, 320, 608, 2, 2, gameArea, selectedMap),  // Block 1 - higher platform
                             pushblock(context, 696, 640, 2, 2, gameArea, selectedMap),  // Block 2 - on the floor
                             pushblock(context, 1020, 640, 2, 2, gameArea, selectedMap)  // Block 3 - on the floor
                         ];
