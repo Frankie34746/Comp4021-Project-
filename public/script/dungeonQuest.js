@@ -261,6 +261,9 @@ $("#register-form").on("submit", (e) => {
                             gameState.gameActive = true;
                             isTransitioning = false;
                             
+                            // Update level display
+                            $("#currentLevel").text(currentlevel);
+                            
                             // Initialize next level with same spawn data
                             initializeGame(data.nextMapIndex, data.spawnData);
                         }
@@ -374,6 +377,7 @@ let monsters = null;
 let gameArea = null;
 let gameLoopId = null;
 let gameStartTime = null; // Track when game starts
+let timerInterval = null; // Track timer interval
 
 // Revive tracking
 let lastReviveTime = { player1: 0, player2: 0 };
@@ -390,6 +394,12 @@ const showGameOver = function() {
         gameLoopId = null;
     }
     
+    // Stop the timer
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    
     // Play game over sound
     sounds.gameover.play();
     
@@ -397,7 +407,7 @@ const showGameOver = function() {
     const timeElapsed = Date.now() - gameStartTime;
     const minutes = Math.floor(timeElapsed / 60000);
     const seconds = Math.floor((timeElapsed % 60000) / 1000);
-    const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
     // Update game over page
     $("#player1DeathsLabel").text(`${ownUsername === $("#player1Name").text() ? ownUsername : partnerUsername} Deaths:`);
@@ -579,6 +589,18 @@ const generateSpawnPositions = function(mapIndex) {
     };
 };
 
+// Function to update timer display
+const updateTimer = function() {
+    if (!gameStartTime) return;
+    
+    const timeElapsed = Date.now() - gameStartTime;
+    const minutes = Math.floor(timeElapsed / 60000);
+    const seconds = Math.floor((timeElapsed % 60000) / 1000);
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    $("#timer").text(timeString);
+};
+
 // Initialize the game
 const initializeGame = function(mapIndex, spawnData = null) {
     console.log("Initializing game with mapIndex:", mapIndex);
@@ -587,8 +609,16 @@ const initializeGame = function(mapIndex, spawnData = null) {
     console.log("context:", context);
     console.log("canvas dimensions:", canvas.width, "x", canvas.height);
     
-    // Set game start time
-    gameStartTime = Date.now();
+    // Set game start time only on first level
+    if (!gameStartTime) {
+        gameStartTime = Date.now();
+        
+        // Start timer update interval
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+        timerInterval = setInterval(updateTimer, 100); // Update every 100ms for smooth display
+    }
     
     if (gameState.gameActive) {
         try {
@@ -755,7 +785,10 @@ const jumptonextlevel = function() {
         gameState.gameActive = true;
         isTransitioning = false;
         
-        // Initialize next level
+        // Update level display
+        $("#currentLevel").text(currentlevel);
+        
+        // Initialize next level (timer continues from gameStartTime)
         initializeGame(nextMapIndex, newSpawnData);
     } else {
         const socket = Socket.getSocket();
