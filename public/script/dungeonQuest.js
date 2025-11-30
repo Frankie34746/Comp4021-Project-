@@ -244,6 +244,28 @@ $("#register-form").on("submit", (e) => {
                         }
                     });
 
+                    socket.on("nextLevel", (data) => {
+                        console.log("Received nextLevel event:", data);
+                        if (playerNum === 2 && !isTransitioning) {
+                            // Player 2 receives the command to advance to next level
+                            isTransitioning = true;
+                            currentlevel++;
+                            remainingmapindex = remainingmapindex.filter(idx => idx !== data.nextMapIndex);
+                            
+                            // Cancel current game loop
+                            cancelAnimationFrame(gameLoopId);
+                            
+                            // Reset level-specific state
+                            gameState.treasuresCollected = 0;
+                            $("#treasureCount").text(`${gameState.treasuresCollected}`);
+                            gameState.gameActive = true;
+                            isTransitioning = false;
+                            
+                            // Initialize next level with same spawn data
+                            initializeGame(data.nextMapIndex, data.spawnData);
+                        }
+                    });
+
                     // Listen for monster position sync (Player 2 receives from Player 1)
                     socket.on("syncMonsters", (data) => {
                         if (playerNum === 2 && monsters) {
@@ -278,10 +300,17 @@ $("#register-form").on("submit", (e) => {
                             });
                             if (index > -1) {
                                 treasures.splice(index, 1);
-                                gameState.treasuresCollected++;
-                                $("#treasureCount").text(`${gameState.treasuresCollected}`);
                             }
                         }
+                        // Sync the treasure count from the sender to ensure both players have same count
+                        if (data.totalCollected !== undefined) {
+                            gameState.treasuresCollected = data.totalCollected;
+                        } else {
+                            // Fallback for backward compatibility
+                            gameState.treasuresCollected++;
+                        }
+                        $("#treasureCount").text(`${gameState.treasuresCollected}`);
+                        console.log("Remote player collected treasure. Total:", gameState.treasuresCollected);
                     });
 
                     // Listen for pushblock position sync (Player 2 receives from Player 1)
@@ -638,12 +667,31 @@ const initializeGame = function(mapIndex, spawnData = null) {
                     });
                     console.log(`Created ${treasures.length} treasures`);
 
-                    // Create pushblocks
-                    console.log("Creating pushblocks...");
-                    pushblocks = [
-                        pushblock(context, 256, 512, 2, 2,gameArea,selectedMap) 
-                    ];
-                    console.log("PushBlocks created:", pushblocks);
+                    // Create pushblocks based on map
+                    console.log("Creating pushblocks for map", mapIndex);
+                    pushblocks = [];
+                    
+                    if (mapIndex === 0) {
+                        // Map 1: Multiple blocks for easier stair climbing
+                        // Floor is at y=704, blocks are 64px tall (2x2 tiles), so they spawn at y=640
+                        pushblocks = [
+                            pushblock(context, 320, 640, 2, 2, gameArea, selectedMap),  // Block 1 - on the floor
+                            pushblock(context, 696, 640, 2, 2, gameArea, selectedMap),  // Block 2 - on the floor
+                            pushblock(context, 1020, 640, 2, 2, gameArea, selectedMap)  // Block 3 - on the floor
+                        ];
+                    } else if (mapIndex === 1) {
+                        // Map 2: Original configuration
+                        pushblocks = [
+                            pushblock(context, 256, 512, 2, 2, gameArea, selectedMap)
+                        ];
+                    } else if (mapIndex === 2) {
+                        // Map 3: Original configuration
+                        pushblocks = [
+                            pushblock(context, 256, 512, 2, 2, gameArea, selectedMap)
+                        ];
+                    }
+                    
+                    console.log(`PushBlocks created for map ${mapIndex}:`, pushblocks.length, "blocks");
                     
                     // Create portal
                     console.log("Creating portal...");
@@ -987,14 +1035,15 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
                     console.log("Now u have ", gameState.treasuresCollected," treasure(s)");
                     $("#treasureCount").text(`${gameState.treasuresCollected}`);
                     
-                    // Sync treasure collection to other player
+                    // Always sync treasure collection to other player (both players need same count)
                     if (!DEBUG_MODE) {
                         const socket = Socket.getSocket();
                         if (socket && window.roomId) {
                             socket.emit("collectTreasure", { 
                                 roomId: window.roomId, 
                                 x: treasurePos.x, 
-                                y: treasurePos.y 
+                                y: treasurePos.y,
+                                totalCollected: gameState.treasuresCollected
                             });
                         }
                     }
@@ -1002,25 +1051,37 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
             }
         }
 
-        // Check for level completion: both players in portal (host only)
-        if (gameState.treasuresCollected >= 5) {
-                const portalBB = Portal.getBoundingBox();
-                const p1BB = player1.getBoundingBox();
-                const p2BB = player2.getBoundingBox();
+        // Check for level completion: both players in portal (Player 1 only triggers)
+        if (gameState.treasuresCollected >= 5 && !isTransitioning) {
+            const portalBB = Portal.getBoundingBox();
+            const p1BB = player1.getBoundingBox();
+            const p2BB = player2.getBoundingBox();
+            
+            // Both players must be in portal to advance
+            const bothInPortal = p1BB.intersect(portalBB) && p2BB.intersect(portalBB);
+            
+            // Only Player 1 triggers the level change to avoid race conditions
+            if (bothInPortal && playerNum === 1 && !DEBUG_MODE) {
+                console.log("Both players entered portal! Player 1 triggering next level...");
+                isTransitioning = true;
                 
-                console.log("Portal opens!...");
-                if (p1BB.intersect(portalBB) && p2BB.intersect(portalBB) && !isTransitioning) {
-                    console.log("Both players entered portal! Advancing to next level...");
-                    isTransitioning = true;
-                    
-                    // Cancel current game loop
-                    cancelAnimationFrame(gameLoopId);
-                    
-                    gameState.gameActive = false;
-                    jumptonextlevel();
-                    
-                    return;  // Stop current frame
-                }
+                // Cancel current game loop
+                cancelAnimationFrame(gameLoopId);
+                
+                gameState.gameActive = false;
+                jumptonextlevel();
+                
+                return;  // Stop current frame
+            }
+            // In DEBUG_MODE, allow single player to advance
+            else if (bothInPortal && DEBUG_MODE) {
+                console.log("Portal entered in DEBUG mode! Advancing...");
+                isTransitioning = true;
+                cancelAnimationFrame(gameLoopId);
+                gameState.gameActive = false;
+                jumptonextlevel();
+                return;
+            }
         }
         
 

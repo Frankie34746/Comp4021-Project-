@@ -188,6 +188,10 @@ io.on("connection", (socket) => {
         socket.to(data.roomId).emit("updateHP", data);
     });
 
+    socket.on("nextLevel", (data) => {
+        io.to(data.roomId).emit("nextLevel", data);
+    });
+
     socket.on("gameOver", (data) => {
         io.to(data.roomId).emit("gameOver", data);
     });
