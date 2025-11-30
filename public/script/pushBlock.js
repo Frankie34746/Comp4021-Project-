@@ -87,7 +87,7 @@ const pushblock = function(ctx, x, y, width, height, gameArea, map) {
     };
     
     // Try to push horizontally (called by players)
-    const tryPush = function(pushDirection, pushForce, pushblocks) {
+    const tryPush = function(pushDirection, pushForce, pushblocks, players) {
         let nextX = posX;
         if (pushDirection === 1) { // Left
             nextX -= pushForce;
@@ -114,6 +114,16 @@ const pushblock = function(ctx, x, y, width, height, gameArea, map) {
                 }
             }
         }
+        
+// Inside tryPush, replace the players loop with:
+if (players && Array.isArray(players)) {
+    for (let player of players) {
+        const playerBox = player.getBoundingBox();
+        if (testBox.intersect(playerBox)) {
+            return false; // Blocked by player
+        }
+    }
+}
         
         // Check game area
         if (nextX < gameArea.getLeft() || nextX + blockWidth > gameArea.getRight()) {
