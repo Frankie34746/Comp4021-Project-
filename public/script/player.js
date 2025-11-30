@@ -447,8 +447,8 @@ for (let block of pushblocks) {
         // === GROUND DETECTION (allow jumping only when on ground) ===
         let onGround = false;
 
-        left = x - halfWidth/2 + 10;
-        right = x + halfWidth/2 - 10;
+        left = x - halfWidth/2 ;
+        right = x + halfWidth/2 ;
         top = y;
         bottom = y + sprite_height + 1;
         const groundCheckBox = BoundingBox(ctx, top, left, bottom, right);
@@ -530,4 +530,5 @@ for (let block of pushblocks) {
         getfacing: getfacing
     };
 };
+
 
