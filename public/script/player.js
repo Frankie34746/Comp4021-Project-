@@ -156,7 +156,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
         let left = x-halfWidth / 2;
         let right = x+halfWidth / 2;
-        let top = y-halfheight;
+        let top = y-halfheight + 5;
         let bottom = y+sprite_height;
 
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
@@ -274,7 +274,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
             let left = x-halfWidth / 2;
             let right = x+halfWidth / 2;
-            let top = y-halfheight;
+            let top = y-halfheight + 5;
             let bottom = y+sprite_height;
             let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -339,7 +339,7 @@ const Player = function(ctx, x, y, gameArea, map) {
 
         let left = x-halfWidth / 2;
         let right = x+halfWidth / 2;
-        let top = y-halfheight;
+        let top = y-halfheight + 2;
         let bottom = y+sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -493,3 +493,4 @@ const Player = function(ctx, x, y, gameArea, map) {
         getfacing: getfacing
     };
 };
+
