@@ -75,7 +75,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
         let left = x-halfWidth/2;
         let right = x+halfWidth/2;
-        let top = y-halfheight;
+        let top = y-halfheight + 5;
         let bottom = y+sprite_height;
 
         // Assuming BoundingBox takes ctx, top, left, bottom, right 
@@ -153,7 +153,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         let halfheight = sprite_height / 2;
         let left = x - halfWidth / 2;
         let right = x + halfWidth / 2;
-        let top = y - halfheight;
+        let top = y - halfheight + 5;
         let bottom = y + sprite_height;
         let currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -203,7 +203,7 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
 
         left = x - halfWidth / 2;
         right = x + halfWidth / 2;
-        top = y - halfheight;
+        top = y - halfheight + 5;
         bottom = y + sprite_height;
         currentBox = BoundingBox(ctx, top, left, bottom, right);
 
@@ -265,3 +265,4 @@ const Monster = function(ctx, x, y, gameArea, map, withtreasure = false) {
         setDirection: (dir) => { direction = dir; prevDirection = dir; }
     };
 };
+
