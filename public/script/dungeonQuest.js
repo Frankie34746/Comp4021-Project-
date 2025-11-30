@@ -915,8 +915,9 @@ const gameLoop = function(time) {
         }
 
        // Draw portal if collected enough treasure
-        if (gameState.treasuresCollected >= 5)
+        if (gameState.treasuresCollected >= 5 && Portal) {
             Portal.draw();
+        }
         
         // Draw debug info
         context.fillStyle = 'black';
@@ -967,7 +968,9 @@ const gameLoop = function(time) {
         }
         
         // Update portal
-        Portal.update(time);
+        if (Portal) {
+            Portal.update(time);
+        }
         
         // Collision detection
         if (monsters && player1 && player2) {
@@ -1177,7 +1180,7 @@ if (p2AttackBB.intersect(monsterBB) && player2.isAttacking()) {
         }
 
         // Check for level completion: both players in portal (Player 1 only triggers)
-        if (gameState.treasuresCollected >= 5 && !isTransitioning) {
+        if (gameState.treasuresCollected >= 5 && !isTransitioning && Portal) {
             const portalBB = Portal.getBoundingBox();
             const p1BB = player1.getBoundingBox();
             const p2BB = player2.getBoundingBox();
